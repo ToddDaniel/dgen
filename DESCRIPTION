@@ -1,0 +1,27 @@
+Package: dgen
+Type: Package
+Title: Data Generator for Statistical Teaching and Testing
+Version: 0.1.0
+Authors@R: person("Todd", "Daniel",
+    email = "tdaniel@yourinstitution.edu",
+    role = c("aut", "cre"),
+    comment = c(ORCID = ""))
+Description: Generates datasets with exact statistical properties—means,
+    standard deviations, and correlations—for teaching statistics and
+    validating analytical workflows. Uses iterative refinement to achieve
+    specified parameters rather than approximations. Supports t-tests
+    (one-sample, independent, paired), ANOVA (one-way, two-way, blocked),
+    chi-square tests (goodness-of-fit, independence), proportion tests,
+    linear and logistic regression, and psychometric scales. Each function
+    generates data and automatically runs the corresponding analysis,
+    returning results alongside effect sizes and assumption checks.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Depends: R (>= 4.0.0)
+Imports: MASS
+Suggests:
+    testthat (>= 3.0.0)
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.3
+URL: https://github.com/yourgithubusername/dgen
+BugReports: https://github.com/yourgithubusername/dgen/issues

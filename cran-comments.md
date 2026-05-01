@@ -7,7 +7,14 @@
 
 ## R CMD check results
 
-0 errors | 0 warnings | 0 notes
+Local (macOS): 0 errors | 0 warnings | 0 notes
+
+win-builder (R-devel): 0 errors | 0 warnings | 2 notes
+
+- NOTE: New submission — expected for a first submission.
+- NOTE: Found files/directories 'lastMisspelling' 'spell-checking in
+  progress' in the temp directory — this is a known win-builder server
+  artifact unrelated to the package.
 
 ## Downstream dependencies
 

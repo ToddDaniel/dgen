@@ -3,7 +3,7 @@ Type: Package
 Title: Data Generator for Statistical Teaching and Testing
 Version: 0.1.0
 Authors@R: person("Todd", "Daniel",
-    email = "tdaniel@yourinstitution.edu",
+    email = "ToddDaniel@MissouriState.edu",
     role = c("aut", "cre"),
     comment = c(ORCID = ""))
 Description: Generates datasets with exact statistical properties—means,
@@ -23,5 +23,5 @@ Suggests:
     testthat (>= 3.0.0)
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
-URL: https://github.com/yourgithubusername/dgen
-BugReports: https://github.com/yourgithubusername/dgen/issues
+URL: https://github.com/ToddDaniel/dgen
+BugReports: https://github.com/ToddDaniel/dgen/issues

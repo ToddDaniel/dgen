@@ -7,14 +7,17 @@
 
 ## R CMD check results
 
-Local (macOS): 0 errors | 0 warnings | 0 notes
+Local (macOS): 0 errors | 0 warnings | 1 note
 
-win-builder (R-devel): 0 errors | 0 warnings | 2 notes
+win-builder (R-devel): 0 errors | 0 warnings | 1 note
 
-- NOTE: New submission — expected for a first submission.
-- NOTE: Found files/directories 'lastMisspelling' 'spell-checking in
-  progress' in the temp directory — this is a known win-builder server
-  artifact unrelated to the package.
+Both notes are the same single "CRAN incoming feasibility" check, which
+contains two expected items for a first submission:
+
+- New submission — standard boilerplate for every first-time package.
+- Possibly misspelled words in DESCRIPTION: "McNemar's" — this is
+  correctly spelled; it refers to McNemar's test (Quinn McNemar),
+  implemented by the package's `mcnemar_gen()` function. Not a typo.
 
 ## Downstream dependencies
 

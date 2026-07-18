@@ -32,6 +32,8 @@ devtools::install_github("ToddDaniel/dgen")
 - **Psychometric scale family**: `scale_gen()`, `item_gen()`
 - **Effect-size helpers**: `d_to_means()`, `d_to_means_paired()`,
   `f_to_means()`, `h_to_prop()`
+- **Batch generation**: `batch_gen()` — many unique per-student datasets
+  from one set of targets, with a compiled instructor answer key
 
 ## License
 

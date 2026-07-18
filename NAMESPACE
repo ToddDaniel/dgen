@@ -3,6 +3,7 @@
 export(anova_blocked_gen)
 export(anova_gen)
 export(anova_twoway_gen)
+export(batch_gen)
 export(bin_gen)
 export(chisq_gof_gen)
 export(chisq_indep_gen)

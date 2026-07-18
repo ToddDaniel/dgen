@@ -1,7 +1,7 @@
 Package: dgen
 Type: Package
 Title: Data Generator for Statistical Teaching and Testing
-Version: 0.1.0
+Version: 0.1.0.9000
 Authors@R: c(
     person("Todd", "Daniel", email = "ToddDaniel@missouristate.edu",
            role = c("aut", "cre")),

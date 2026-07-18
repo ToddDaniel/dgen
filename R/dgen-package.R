@@ -55,6 +55,12 @@
 #'   \item{\code{\link{item_gen}}}{Back-solved items from a composite score}
 #' }
 #'
+#' @section Batch generation:
+#' \describe{
+#'   \item{\code{\link{batch_gen}}}{Many unique per-student datasets from
+#'     one set of targets, with a compiled instructor answer key}
+#' }
+#'
 #' @section Effect-size helpers:
 #' \describe{
 #'   \item{\code{\link{d_to_means}}}{Cohen's d to target means for

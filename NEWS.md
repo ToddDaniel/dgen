@@ -1,3 +1,10 @@
+# dgen (development version)
+
+- New `batch_gen()`: generate many unique per-student datasets from one
+  set of targets (distinct seeds), with a compiled instructor answer
+  key of each dataset's achieved statistics, effect sizes, and test
+  results.
+
 # dgen 0.1.0
 
 ## Initial release

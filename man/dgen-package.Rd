@@ -75,6 +75,14 @@ assumption checks.
 }
 }
 
+\section{Batch generation}{
+
+\describe{
+\item{\code{\link{batch_gen}}}{Many unique per-student datasets from
+one set of targets, with a compiled instructor answer key}
+}
+}
+
 \section{Effect-size helpers}{
 
 \describe{

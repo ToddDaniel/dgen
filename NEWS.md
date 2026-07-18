@@ -4,6 +4,13 @@
   set of targets (distinct seeds), with a compiled instructor answer
   key of each dataset's achieved statistics, effect sizes, and test
   results.
+- New `dist_gen()`: generate a deliberately non-normal variable with an
+  exact mean and SD. Named shapes (`right_skew`, `left_skew`,
+  `heavy_tails`, `light_tails`, `bimodal`, `normal`) with
+  mild/moderate/severe presets, or numeric skewness/excess-kurtosis
+  targets via the Fleishman power method. Reports achieved sample
+  skewness/kurtosis and runs normality diagnostics (Shapiro-Wilk) so
+  the data visibly fail the checks they are built to fail.
 
 # dgen 0.1.0
 

@@ -23,7 +23,7 @@ devtools::install_github("ToddDaniel/dgen")
 
 ## Functions
 
-- **Core generators**: `stat_gen()`, `cor_gen()`
+- **Core generators**: `stat_gen()`, `dist_gen()`, `cor_gen()`
 - **T-test family**: `t_onesample_gen()`, `t_indep_gen()`, `t_paired_gen()`
 - **ANOVA family**: `anova_gen()`, `anova_twoway_gen()`, `anova_blocked_gen()`
 - **Chi-square family**: `chisq_gof_gen()`, `chisq_indep_gen()`, `chisq_table_gen()`

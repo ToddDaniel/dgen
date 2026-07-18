@@ -18,6 +18,8 @@ assumption checks.
 
 \describe{
 \item{\code{\link{stat_gen}}}{Single variable with an exact mean and SD}
+\item{\code{\link{dist_gen}}}{Single non-normal variable (skewed,
+heavy/light-tailed, or bimodal) with an exact mean and SD}
 \item{\code{\link{cor_gen}}}{Multiple correlated variables}
 }
 }

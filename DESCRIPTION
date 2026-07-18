@@ -2,10 +2,12 @@ Package: dgen
 Type: Package
 Title: Data Generator for Statistical Teaching and Testing
 Version: 0.1.0
-Authors@R: person("Todd", "Daniel",
-    email = "ToddDaniel@MissouriState.edu",
-    role = c("aut", "cre"),
-    comment = c(ORCID = ""))
+Authors@R: c(
+    person("Todd", "Daniel", email = "ToddDaniel@missouristate.edu",
+           role = c("aut", "cre")),
+    person("Brendan", "Morse", role = "ctb",
+           comment = "Author of the original MorseGen functions (stat.gen, cor.gen), 1982-2018, on which this package's design is based")
+    )
 Description: Generates datasets with exact statistical properties—means,
     standard deviations, and correlations—for teaching statistics and
     validating analytical workflows. Uses iterative refinement to achieve

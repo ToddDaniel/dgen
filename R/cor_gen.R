@@ -40,6 +40,9 @@
 #'                   r = cm, var_names = c("FP", "MD", "Age"))
 #'
 #' @export
+# ---
+# Adapted from MorseGen, originally written by Brendan Morse (1982-2018).
+# ---
 cor_gen <- function(n,
                     m,
                     sd,

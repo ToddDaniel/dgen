@@ -26,6 +26,9 @@
 #' result <- stat_gen(n = 100, m = 25, sd = 5, neg_data = FALSE, var_name = "Age")
 #'
 #' @export
+# ---
+# Adapted from MorseGen, originally written by Brendan Morse (1982-2018).
+# ---
 stat_gen <- function(n,
                      m,
                      sd,

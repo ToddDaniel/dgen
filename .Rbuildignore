@@ -3,4 +3,3 @@
 ^.*\.Rproj$
 ^\.DS_Store$
 ^cran-comments\.md$
-^CURRENT_PACKAGE_STATE\.md$

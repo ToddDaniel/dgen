@@ -32,15 +32,23 @@ Design philosophy:
 - **Arguments in, list out.** Every function returns a single list
   (invisibly) containing the generated data plus supporting statistics —
   targets, achieved values, test results, effect sizes, and assumption
-  checks where applicable. Nothing is written to disk unless
-  `export_csv = TRUE` is explicitly passed (default `FALSE` throughout).
+  checks where applicable. Nothing is written to disk unless the user
+  opts in via `export_csv` (default `FALSE` throughout; `TRUE` or a file
+  path enables writing).
 - **Narrow, defensible scope.** The package covers a fixed set of teaching
   scenarios (t-tests, ANOVA, chi-square, proportions, regression,
   psychometric scales) rather than a general-purpose simulation framework.
 
 ## 2. Function Inventory
 
-All 18 exported functions, grouped by family.
+All 23 exported functions (19 generators + 4 effect-size helpers),
+grouped by family.
+
+Every generator's `export_csv` argument accepts `FALSE` (default; nothing
+written), `TRUE` (auto-generated filename in the current working
+directory), or a file path giving the destination. Generators with an
+`output_format = "both"` option insert `_wide`/`_long` before the
+extension when a single path must yield two files.
 
 ### Core generators
 
@@ -107,6 +115,12 @@ All 18 exported functions, grouped by family.
   Generates binary outcomes for two independent groups with exact
   proportions; runs a two-sample proportion test and the equivalent
   chi-square test, plus Cohen's h, odds ratio, and risk ratio.
+- **`mcnemar_gen(n, p1, p2, n_discordant = NULL, measure1_name = "Time1", measure2_name = "Time2", category_labels = c("Failure", "Success"), id_name = "ID", seed = NULL, export_csv = FALSE, run_analysis = TRUE)`**
+  Generates paired binary outcomes (the paired counterpart of
+  `twoprop_gen`) with exact marginal proportions at each measurement via
+  closed-form integer cell counts; `n_discordant` controls how many pairs
+  change category. Runs McNemar's chi-square test and the exact binomial
+  equivalent, and reports the discordant-pair odds ratio and Cohen's g.
 
 ### Regression family
 
@@ -135,6 +149,27 @@ All 18 exported functions, grouped by family.
   Back-solves individual scale items that average to a given composite
   score, for giving students raw item-level data to aggregate.
 
+### Effect-size helpers
+
+Closed-form converters for working "effect-size-first": decide the effect
+size students should find, then convert it into the parameters the
+generators need. Each prints a summary via `message()` and returns a
+list invisibly.
+
+- **`d_to_means(d, sd1, sd2 = sd1, mean1 = 0)`**
+  Cohen's d to a second group mean for `t_indep_gen()` (or
+  `t_onesample_gen()` with `sd2 = sd1`).
+- **`d_to_means_paired(d, sd1, sd2 = sd1, r = 0.70, mean1 = 0)`**
+  Paired Cohen's d (defined as mean difference over the SD of difference
+  scores, matching `t_paired_gen()`'s `cohens_d_paired`) to a second
+  measurement mean.
+- **`f_to_means(f = NULL, k, sd, grand_mean = 0, eta_squared = NULL)`**
+  Cohen's f — or eta-squared, converted internally — to k evenly spaced
+  group means for `anova_gen()`.
+- **`h_to_prop(h, p1)`**
+  Cohen's h to a second proportion for `twoprop_gen()` or
+  `oneprop_gen()`.
+
 ## 3. What's Deliberately Not Included
 
 - **Interactive / guided-tutorial mode.** Earlier drafts of some of these
@@ -145,7 +180,7 @@ All 18 exported functions, grouped by family.
   confirmation summary, and ask for a yes/no to proceed. None of that
   exists anywhere in the current package: there is no `readline()`, no
   menu, no mode-selection branching, and no "if no arguments given, ask the
-  user" logic in any of the 18 exported functions. This was a deliberate
+  user" logic in any of the 23 exported functions. This was a deliberate
   cut, not an oversight — every function now has exactly one calling
   convention (arguments in, list out), matching the CRAN submission's
   narrow-scope goal.
@@ -153,30 +188,32 @@ All 18 exported functions, grouped by family.
   to support arbitrary distributions, arbitrary study designs, or a
   formula-based simulation DSL. It covers a fixed set of named teaching
   scenarios (the families listed above).
-- **Console output suppression flag.** Every function currently ends with
-  an unconditional `cat()`/`print()` summary of the generated
-  data/results, disclosed in `cran-comments.md`. There is no `verbose =`
-  argument to silence it. This is a conscious, currently-accepted design
-  choice, not an interactive-mode remnant — no user input is read, only
-  output is printed — but it is worth flagging as a possible future
-  refinement if a reviewer objects.
+- **A `verbose =` flag.** Every function ends with a concise console
+  summary of the generated data/results, emitted via `message()` (not
+  `cat()`/`print()`), so users can silence it with `suppressMessages()`.
+  This satisfies CRAN's usual "suppressible console output" expectation
+  without adding a `verbose` argument to every signature.
 
 ## 4. Current Status
 
 **R CMD check (`--as-cran`, local, MacTeX + Homebrew `tidy-html5`
-installed):** 0 errors, 0 warnings, 2 NOTEs.
+installed):** 0 errors, 0 warnings, 1 NOTE.
 
 1. "New submission" — standard boilerplate CRAN attaches to every
    first-time package submission; not a defect.
-2. `anova_blocked_gen` example exceeds 5 seconds (~35s elapsed), a result
-   of the iterative-refinement loop converging on exact target statistics
-   with a within-block correlation constraint. Already disclosed to
-   reviewers in `cran-comments.md`.
+
+The former example-timing NOTE is resolved: the large `anova_blocked_gen`
+example is wrapped in `\donttest{}` (still exercised by
+`--run-donttest`, ~38s, OK), and a small example that converges in about
+a second runs unguarded. Console summaries are emitted via `message()`
+(suppressible with `suppressMessages()`), addressing CRAN's usual
+console-output objection. `CURRENT_PACKAGE_STATE.md` is excluded from
+the build via `.Rbuildignore`.
 
 Both the PDF and HTML manuals render without error.
 
-**Test suite:** 129 tests across 8 `testthat` files, 0 failures, exercising
-all 18 exported functions.
+**Test suite:** 204 tests across 11 `testthat` files, 0 failures,
+exercising all 23 exported functions.
 
 **Documentation:** every exported function has a corresponding `.Rd` file
 via roxygen2 (`RoxygenNote: 7.3.3`). Package-level documentation
@@ -187,6 +224,15 @@ with author/URL/BugReports information pulled from `DESCRIPTION`.
 **CRAN readiness:** the package installs, loads, and unloads cleanly with
 no dependency issues (`Imports: MASS`; `Depends: R (>= 4.0.0)`). Based on
 the current local check results, the package appears ready for submission.
+One step remains before submitting: rerun win-builder
+(`devtools::check_win_devel()`), since the previous win-builder result
+predates the July 2026 changes (message-based output, `\donttest{}`
+example, `mcnemar_gen`, effect-size helpers, `export_csv` file paths).
+
+Note for building the submission tarball: `R CMD build` cannot handle the
+doubled space in this folder's path (`~QBA  Shared Course DEV`). Build
+with `devtools::build()`, or copy the package directory to a simple path
+first.
 
 ## 5. Attribution
 

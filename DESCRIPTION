@@ -13,10 +13,13 @@ Description: Generates datasets with exact statistical properties—means,
     validating analytical workflows. Uses iterative refinement to achieve
     specified parameters rather than approximations. Supports t-tests
     (one-sample, independent, paired), ANOVA (one-way, two-way, blocked),
-    chi-square tests (goodness-of-fit, independence), proportion tests,
-    linear and logistic regression, and psychometric scales. Each function
-    generates data and automatically runs the corresponding analysis,
-    returning results alongside effect sizes and assumption checks.
+    chi-square tests (goodness-of-fit, independence), proportion tests
+    (one-sample, two-sample, and paired via McNemar's test), linear and
+    logistic regression, and psychometric scales. Each function generates
+    data and automatically runs the corresponding analysis, returning
+    results alongside effect sizes and assumption checks. Helper functions
+    convert target effect sizes (Cohen's d, f, and h) into the means and
+    proportions the generators need.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Depends: R (>= 4.0.0)

@@ -27,9 +27,11 @@ devtools::install_github("ToddDaniel/dgen")
 - **T-test family**: `t_onesample_gen()`, `t_indep_gen()`, `t_paired_gen()`
 - **ANOVA family**: `anova_gen()`, `anova_twoway_gen()`, `anova_blocked_gen()`
 - **Chi-square family**: `chisq_gof_gen()`, `chisq_indep_gen()`, `chisq_table_gen()`
-- **Proportion family**: `oneprop_gen()`, `twoprop_gen()`
+- **Proportion family**: `oneprop_gen()`, `twoprop_gen()`, `mcnemar_gen()`
 - **Regression family**: `make_predictors()`, `bin_gen()`, `reg_gen()`
 - **Psychometric scale family**: `scale_gen()`, `item_gen()`
+- **Effect-size helpers**: `d_to_means()`, `d_to_means_paired()`,
+  `f_to_means()`, `h_to_prop()`
 
 ## License
 

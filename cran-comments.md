@@ -26,11 +26,14 @@ None. This is a new package with no existing reverse dependencies.
   normal generation required by `cor_gen()`, `t_paired_gen()`,
   `anova_blocked_gen()`, `make_predictors()`, and `scale_gen()`.
 
-- All functions return results invisibly and print a concise console
-  summary. No files are written unless `export_csv = TRUE` (default
-  `FALSE`).
+- All functions return results invisibly and emit a concise console
+  summary via `message()`, which users can silence with
+  `suppressMessages()`. No files are written unless the user opts in
+  through the `export_csv` argument (default `FALSE`; `TRUE` or a file
+  path enables writing).
 
-- `anova_blocked_gen()` example takes ~35 seconds in `R CMD check`
-  examples due to the iterative refinement loop converging on exact
-  target statistics with within-block correlation. This is expected
-  behaviour and is within CRAN's time limits.
+- The larger textbook-style example for `anova_blocked_gen()` is wrapped
+  in `\donttest{}` because its iterative refinement loop (converging on
+  exact target statistics under a within-block correlation constraint)
+  takes ~30 seconds. A small example that runs in about a second is
+  provided outside `\donttest{}`.

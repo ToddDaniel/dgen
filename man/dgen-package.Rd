@@ -54,6 +54,7 @@ assumption checks.
 \describe{
 \item{\code{\link{oneprop_gen}}}{One-sample proportion test data}
 \item{\code{\link{twoprop_gen}}}{Two-sample proportion test data}
+\item{\code{\link{mcnemar_gen}}}{Paired proportions (McNemar test) data}
 }
 }
 
@@ -71,6 +72,19 @@ assumption checks.
 \describe{
 \item{\code{\link{scale_gen}}}{Multi-item Likert scale with intentional bad items}
 \item{\code{\link{item_gen}}}{Back-solved items from a composite score}
+}
+}
+
+\section{Effect-size helpers}{
+
+\describe{
+\item{\code{\link{d_to_means}}}{Cohen's d to target means for
+independent groups}
+\item{\code{\link{d_to_means_paired}}}{Paired Cohen's d to target means
+for repeated measures}
+\item{\code{\link{f_to_means}}}{Cohen's f (or eta-squared) to target
+group means for ANOVA}
+\item{\code{\link{h_to_prop}}}{Cohen's h to a second target proportion}
 }
 }
 

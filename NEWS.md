@@ -2,10 +2,16 @@
 
 ## Initial release
 
-18 data-generation functions for teaching statistics and validating
-analytical workflows. Each function uses iterative refinement to achieve
-exact target means, standard deviations, and correlations rather than
-approximations.
+19 data-generation functions and 4 effect-size helpers for teaching
+statistics and validating analytical workflows. Each generator uses
+iterative refinement or exact closed-form construction to achieve exact
+target means, standard deviations, correlations, and proportions rather
+than approximations.
+
+All generators accept `export_csv = FALSE` (default), `TRUE`
+(auto-generated filename in the working directory), or a file path.
+Console summaries are emitted with `message()` and can be silenced with
+`suppressMessages()`.
 
 ### Core generators
 - `stat_gen()` — single continuous variable with exact mean and SD
@@ -34,6 +40,8 @@ approximations.
 ### Proportion family
 - `oneprop_gen()` — one-sample proportion test data
 - `twoprop_gen()` — two-sample proportion test data
+- `mcnemar_gen()` — paired proportions (McNemar test) data with exact
+  marginal proportions and controllable discordant pairs
 
 ### Regression family
 - `make_predictors()` — multiple predictors (continuous and binary)
@@ -48,3 +56,11 @@ approximations.
   for teaching reliability analysis
 - `item_gen()` — back-solves individual scale items from composite
   scores
+
+### Effect-size helpers
+- `d_to_means()` — Cohen's d to target means for independent groups
+- `d_to_means_paired()` — paired Cohen's d to target means for repeated
+  measures
+- `f_to_means()` — Cohen's f (or eta-squared) to target group means for
+  one-way ANOVA
+- `h_to_prop()` — Cohen's h to a second target proportion

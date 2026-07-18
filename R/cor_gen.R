@@ -15,7 +15,9 @@
 #'   \code{"Var1"}, \code{"Var2"}, etc.
 #' @param decimals Number of decimal places for rounding (default = 2)
 #' @param seed Integer seed for reproducibility (default = NULL)
-#' @param export_csv Logical; export data to a CSV file? (default = FALSE)
+#' @param export_csv Either \code{FALSE} (default; nothing is written),
+#'   \code{TRUE} (write a CSV with an auto-generated name to the current
+#'   working directory), or a file path giving the CSV destination
 #' @param run_analysis Logical; run pairwise correlation tests? (default = TRUE)
 #'
 #' @return A list with:
@@ -176,19 +178,18 @@ cor_gen <- function(n,
     }
   }
 
-  if (export_csv) {
-    filename <- if (n_vars == 2) {
-      paste0(var_names[1], "_", var_names[2], "_dgen.csv")
-    } else {
-      paste0(var_names[1], "_", var_names[2], "_plus", n_vars - 2, "_dgen.csv")
-    }
-    utils::write.csv(data_out, file = filename, row.names = FALSE)
-    message("Data saved to: ", file.path(getwd(), filename))
+  default_fn <- if (n_vars == 2) {
+    paste0(var_names[1], "_", var_names[2], "_dgen.csv")
+  } else {
+    paste0(var_names[1], "_", var_names[2], "_plus", n_vars - 2, "_dgen.csv")
   }
+  dgen_export(data_out, export_csv, default_fn)
 
-  cat("Correlated variables generated (n =", n, ",", n_vars, "variables)\n")
-  cat("Target correlation matrix:\n"); print(round(cor_matrix, 3))
-  cat("Achieved correlation matrix:\n"); print(round(achieved_cors, 3))
+  message("Correlated variables generated (n = ", n, ", ", n_vars, " variables)")
+  message("Target correlation matrix:\n",
+          paste(utils::capture.output(round(cor_matrix, 3)), collapse = "\n"))
+  message("Achieved correlation matrix:\n",
+          paste(utils::capture.output(round(achieved_cors, 3)), collapse = "\n"))
 
   result <- list(
     data          = data_out,

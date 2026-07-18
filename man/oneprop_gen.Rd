@@ -30,7 +30,9 @@ categories: \code{c("Failure label", "Success label")}
 
 \item{seed}{Integer seed for reproducibility (default = NULL)}
 
-\item{export_csv}{Logical; export data to CSV? (default = FALSE)}
+\item{export_csv}{Either \code{FALSE} (default; nothing is written),
+\code{TRUE} (write a CSV with an auto-generated name to the current
+working directory), or a file path giving the CSV destination}
 
 \item{run_analysis}{Logical; run proportion tests automatically?
 (default = TRUE)}

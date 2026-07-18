@@ -18,7 +18,9 @@
 #' @param group_name Name for the grouping variable (default = \code{"Group"})
 #' @param decimals Number of decimal places for rounding (default = 2)
 #' @param seed Integer seed for reproducibility (default = NULL)
-#' @param export_csv Logical; export data to a CSV file? (default = FALSE)
+#' @param export_csv Either \code{FALSE} (default; nothing is written),
+#'   \code{TRUE} (write a CSV with an auto-generated name to the current
+#'   working directory), or a file path giving the CSV destination
 #' @param run_analysis Logical; run t-tests automatically? (default = TRUE)
 #'
 #' @return A list with:
@@ -124,25 +126,24 @@ t_indep_gen <- function(n1,
     t_test_welch  <- stats::t.test(fml, data = data_out, var.equal = FALSE)
   }
 
-  if (export_csv) {
-    filename <- paste0(var_name, "_by_", group_name, "_dgen.csv")
-    utils::write.csv(data_out, file = filename, row.names = FALSE)
-    message("Data saved to: ", file.path(getwd(), filename))
-  }
+  dgen_export(data_out, export_csv,
+              paste0(var_name, "_by_", group_name, "_dgen.csv"))
 
-  cat("Independent t-test data generated.\n")
-  cat(sprintf("Group 1 (%s): n=%d, M=%.2f, SD=%.2f\n", label1, n1, m1_ach, sd1_ach))
-  cat(sprintf("Group 2 (%s): n=%d, M=%.2f, SD=%.2f\n", label2, n2, m2_ach, sd2_ach))
-  cat(sprintf("Cohen's d: %.3f | Pooled SD: %.3f\n", cohens_d, pooled_sd))
+  message("Independent t-test data generated.")
+  message(sprintf("Group 1 (%s): n=%d, M=%.2f, SD=%.2f",
+                  label1, n1, m1_ach, sd1_ach))
+  message(sprintf("Group 2 (%s): n=%d, M=%.2f, SD=%.2f",
+                  label2, n2, m2_ach, sd2_ach))
+  message(sprintf("Cohen's d: %.3f | Pooled SD: %.3f", cohens_d, pooled_sd))
 
   if (run_analysis) {
     sd_ratio <- sd2_ach / sd1_ach
     use_welch <- !(sd_ratio >= 0.5 && sd_ratio <= 2.0)
     test_used <- if (use_welch) t_test_welch else t_test_pooled
     p <- test_used$p.value
-    cat(sprintf("Recommended test: %s | p = %s\n",
-                ifelse(use_welch, "Welch's", "pooled"),
-                format.pval(p, digits = 3, eps = 0.001)))
+    message(sprintf("Recommended test: %s | p = %s",
+                    ifelse(use_welch, "Welch's", "pooled"),
+                    format.pval(p, digits = 3, eps = 0.001)))
   }
 
   result <- list(

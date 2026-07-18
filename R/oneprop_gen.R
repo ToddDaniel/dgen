@@ -12,7 +12,9 @@
 #'   categories: \code{c("Failure label", "Success label")}
 #'   (default = \code{c("Failure", "Success")})
 #' @param seed Integer seed for reproducibility (default = NULL)
-#' @param export_csv Logical; export data to CSV? (default = FALSE)
+#' @param export_csv Either \code{FALSE} (default; nothing is written),
+#'   \code{TRUE} (write a CSV with an auto-generated name to the current
+#'   working directory), or a file path giving the CSV destination
 #' @param run_analysis Logical; run proportion tests automatically?
 #'   (default = TRUE)
 #'
@@ -89,23 +91,21 @@ oneprop_gen <- function(n,
     )
   }
 
-  if (export_csv) {
-    fn <- paste0(var_name, "_OneProportion_dgen.csv")
-    utils::write.csv(data_out, file = fn, row.names = FALSE)
-    message("Data saved to: ", file.path(getwd(), fn))
-  }
+  dgen_export(data_out, export_csv,
+              paste0(var_name, "_OneProportion_dgen.csv"))
 
-  cat(sprintf("One-sample proportion: p_hat = %.3f (test value = %.3f)\n",
-              sample_p, test_value))
-  cat(sprintf("Successes = %d | Failures = %d | Cohen's h = %.3f\n",
-              successes, failures, cohens_h))
+  message(sprintf("One-sample proportion: p_hat = %.3f (test value = %.3f)",
+                  sample_p, test_value))
+  message(sprintf("Successes = %d | Failures = %d | Cohen's h = %.3f",
+                  successes, failures, cohens_h))
   if (run_analysis) {
     p_val <- prop_test_results$p.value
-    cat(sprintf("prop.test: chi2 = %.3f, p = %s\n",
-                as.numeric(prop_test_results$statistic),
-                format.pval(p_val, digits = 3, eps = 0.001)))
-    cat(sprintf("binom.test: p = %s\n",
-                format.pval(binom_test_results$p.value, digits = 3, eps = 0.001)))
+    message(sprintf("prop.test: chi2 = %.3f, p = %s",
+                    as.numeric(prop_test_results$statistic),
+                    format.pval(p_val, digits = 3, eps = 0.001)))
+    message(sprintf("binom.test: p = %s",
+                    format.pval(binom_test_results$p.value,
+                                digits = 3, eps = 0.001)))
   }
 
   result <- list(

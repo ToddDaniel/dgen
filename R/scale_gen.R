@@ -22,7 +22,9 @@
 #'   (default = 0.80)
 #' @param var_prefix Prefix for item names (default = \code{"Item"})
 #' @param seed Integer seed for reproducibility (default = \code{NULL})
-#' @param export_csv Logical; export student data to CSV? (default = \code{FALSE})
+#' @param export_csv Either \code{FALSE} (default; nothing is written),
+#'   \code{TRUE} (write a CSV with an auto-generated name to the current
+#'   working directory), or a file path giving the CSV destination
 #'
 #' @return A list with:
 #'   \item{data}{Data frame with all items (student version — no hints)}
@@ -174,18 +176,15 @@ scale_gen <- function(n             = 250,
     stringsAsFactors = FALSE
   )
 
-  if (export_csv) {
-    fn <- paste0(var_prefix, "_scale_dgen.csv")
-    utils::write.csv(scale_data, file = fn, row.names = FALSE)
-    message("Student data saved to: ", file.path(getwd(), fn))
-  }
+  dgen_export(scale_data, export_csv, paste0(var_prefix, "_scale_dgen.csv"),
+              label = "Student data")
 
-  cat(sprintf("scale_gen: %d items (%d good, %d bad [%s]), n = %d\n",
-              n_items, n_good_items, n_bad_items, bad_item_type, n))
-  cat(sprintf("Alpha (all items) = %.3f | Alpha (good items only) = %.3f\n",
-              alpha_all, alpha_good))
-  cat("Instructor key: bad item(s) at position(s)",
-      paste(bad_positions, collapse = ", "), "\n")
+  message(sprintf("scale_gen: %d items (%d good, %d bad [%s]), n = %d",
+                  n_items, n_good_items, n_bad_items, bad_item_type, n))
+  message(sprintf("Alpha (all items) = %.3f | Alpha (good items only) = %.3f",
+                  alpha_all, alpha_good))
+  message("Instructor key: bad item(s) at position(s) ",
+          paste(bad_positions, collapse = ", "))
 
   invisible(list(
     data            = scale_data,

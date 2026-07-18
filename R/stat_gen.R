@@ -11,7 +11,9 @@
 #' @param neg_data Logical; allow negative values? (default = TRUE). Set to
 #'   \code{FALSE} for variables like age, income, or counts.
 #' @param seed Integer seed for reproducibility (default = NULL)
-#' @param export_csv Logical; export data to a CSV file? (default = FALSE)
+#' @param export_csv Either \code{FALSE} (default; nothing is written),
+#'   \code{TRUE} (write a CSV with an auto-generated name to the current
+#'   working directory), or a file path giving the CSV destination
 #' @param var_name Name of the generated variable (default = "Variable_X")
 #'
 #' @return A list with:
@@ -101,15 +103,12 @@ stat_gen <- function(n,
     stringsAsFactors = FALSE
   )
 
-  if (export_csv) {
-    filename <- paste0(var_name, "_dgen.csv")
-    utils::write.csv(data_out, file = filename, row.names = FALSE)
-    message("Data saved to: ", file.path(getwd(), filename))
-  }
+  dgen_export(data_out, export_csv, paste0(var_name, "_dgen.csv"))
 
-  cat("Variable generated in", iteration, "iterations.\n")
-  cat("Target  : Mean =", m,  "| SD =", sd, "\n")
-  cat("Achieved: Mean =", achieved$Achieved_Mean, "| SD =", achieved$Achieved_SD, "\n")
+  message("Variable generated in ", iteration, " iterations.")
+  message("Target  : Mean = ", m, " | SD = ", sd)
+  message("Achieved: Mean = ", achieved$Achieved_Mean,
+          " | SD = ", achieved$Achieved_SD)
 
   invisible(list(
     data       = data_out,

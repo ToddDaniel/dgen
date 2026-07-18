@@ -18,7 +18,11 @@
 #'   \code{"Group"})
 #' @param decimals Number of decimal places for rounding (default = 2)
 #' @param seed Integer seed for reproducibility (default = NULL)
-#' @param export_csv Logical; export data to CSV? (default = FALSE)
+#' @param export_csv Either \code{FALSE} (default; nothing is written),
+#'   \code{TRUE} (write a CSV with an auto-generated name to the current
+#'   working directory), or a file path giving the CSV destination.
+#'   When \code{output_format = "both"} and a file path is supplied,
+#'   \code{_wide}/\code{_long} is inserted before the extension
 #' @param output_format One of \code{"wide"}, \code{"long"}, or \code{"both"}
 #'   (default = \code{"long"})
 #' @param run_analysis Logical; compute ANOVA and related statistics?
@@ -226,29 +230,23 @@ anova_gen <- function(k,
     posthoc_tukey  <- tukey_df
   }
 
-  if (export_csv) {
-    if (output_format %in% c("wide", "both")) {
-      fn <- paste0(dv_name, "_by_", factor_name, "_wide_dgen.csv")
-      utils::write.csv(data_wide, file = fn, row.names = FALSE)
-      message("Wide data saved to: ", file.path(getwd(), fn))
-    }
-    if (output_format %in% c("long", "both")) {
-      fn <- paste0(dv_name, "_by_", factor_name, "_long_dgen.csv")
-      utils::write.csv(data_long, file = fn, row.names = FALSE)
-      message("Long data saved to: ", file.path(getwd(), fn))
-    }
-  }
+  dgen_export_pair(data_wide, data_long, output_format, export_csv,
+                   paste0(dv_name, "_by_", factor_name, "_wide_dgen.csv"),
+                   paste0(dv_name, "_by_", factor_name, "_long_dgen.csv"))
 
-  cat("One-way ANOVA data generated (k =", k, ", N =", sum(n), ")\n")
-  print(group_stats[, c("Group", "n", "Mean", "SD")], row.names = FALSE,
-        digits = decimals + 2)
+  message("One-way ANOVA data generated (k = ", k, ", N = ", sum(n), ")")
+  message(paste(utils::capture.output(
+    print(group_stats[, c("Group", "n", "Mean", "SD")], row.names = FALSE,
+          digits = decimals + 2)), collapse = "\n"))
   if (run_analysis && !is.null(anova_table)) {
     at <- anova_table
     at$SS <- round(at$SS, 2); at$MS <- round(at$MS, 2); at$F <- round(at$F, 3)
     at$p  <- format.pval(at$p, digits = 3, eps = 0.001)
-    cat("\nANOVA table:\n"); print(at, row.names = FALSE)
-    cat(sprintf("\nomega^2 = %.3f | eta^2 = %.3f\n",
-                effect_sizes$omega_squared, effect_sizes$eta_squared))
+    message("\nANOVA table:\n",
+            paste(utils::capture.output(print(at, row.names = FALSE)),
+                  collapse = "\n"))
+    message(sprintf("\nomega^2 = %.3f | eta^2 = %.3f",
+                    effect_sizes$omega_squared, effect_sizes$eta_squared))
   }
 
   result <- list(group_stats = group_stats, iterations = iterations)

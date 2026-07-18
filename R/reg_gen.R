@@ -22,7 +22,9 @@
 #' @param decimals Number of decimal places for continuous outcomes
 #'   (default = 2)
 #' @param seed Integer seed for reproducibility (default = \code{NULL})
-#' @param export_csv Logical; export data to CSV? (default = \code{FALSE})
+#' @param export_csv Either \code{FALSE} (default; nothing is written),
+#'   \code{TRUE} (write a CSV with an auto-generated name to the current
+#'   working directory), or a file path giving the CSV destination
 #' @param run_analysis Logical; run regression automatically?
 #'   (default = \code{TRUE})
 #'
@@ -264,35 +266,31 @@ reg_gen <- function(predictors,
     }
   }
 
-  if (export_csv) {
-    fn <- if (length(predictor_names) == 1) {
-      paste0(predictor_names[1], "_", outcome_name, "_dgen.csv")
-    } else {
-      paste0(predictor_names[1], "_", predictor_names[2],
-             if (length(predictor_names) > 2)
-               paste0("_plus", length(predictor_names) - 2)
-             else "", "_", outcome_name, "_dgen.csv")
-    }
-    utils::write.csv(output_data, file = fn, row.names = FALSE)
-    message("Data saved to: ", file.path(getwd(), fn))
+  default_fn <- if (length(predictor_names) == 1) {
+    paste0(predictor_names[1], "_", outcome_name, "_dgen.csv")
+  } else {
+    paste0(predictor_names[1], "_", predictor_names[2],
+           if (length(predictor_names) > 2)
+             paste0("_plus", length(predictor_names) - 2)
+           else "", "_", outcome_name, "_dgen.csv")
   }
+  dgen_export(output_data, export_csv, default_fn)
 
-  cat(sprintf("reg_gen: %s outcome '%s', N = %d, predictors: %s\n",
-              outcome_type, outcome_name, n,
-              paste(predictor_names, collapse = ", ")))
+  message(sprintf("reg_gen: %s outcome '%s', N = %d, predictors: %s",
+                  outcome_type, outcome_name, n,
+                  paste(predictor_names, collapse = ", ")))
   if (outcome_type == "continuous" && run_analysis) {
-    cat(sprintf("R2 target = %.3f, achieved = %.3f | ",
-                r_squared,
-                if (!is.null(model_fit$r_squared_achieved))
-                  model_fit$r_squared_achieved
-                else model_fit$r_squared_initial))
-    cat(sprintf("F = %.3f, p = %s\n",
-                model_fit$f_statistic,
-                format.pval(model_fit$p_value, digits = 3, eps = 0.001)))
+    message(sprintf("R2 target = %.3f, achieved = %.3f | F = %.3f, p = %s",
+                    r_squared,
+                    if (!is.null(model_fit$r_squared_achieved))
+                      model_fit$r_squared_achieved
+                    else model_fit$r_squared_initial,
+                    model_fit$f_statistic,
+                    format.pval(model_fit$p_value, digits = 3, eps = 0.001)))
   } else if (outcome_type == "binary") {
-    cat(sprintf("prevalence target = %.3f, achieved = %.3f\n",
-                outcome_stats$prevalence_target,
-                outcome_stats$prevalence_achieved))
+    message(sprintf("prevalence target = %.3f, achieved = %.3f",
+                    outcome_stats$prevalence_target,
+                    outcome_stats$prevalence_achieved))
   }
 
   result <- list(

@@ -10,7 +10,9 @@
 #'   variable
 #' @param var_name Name for binary variable (default = \code{"Binary_Var"})
 #' @param seed Integer seed for reproducibility (default = \code{NULL})
-#' @param export_csv Logical; export data to CSV? (default = \code{FALSE})
+#' @param export_csv Either \code{FALSE} (default; nothing is written),
+#'   \code{TRUE} (write a CSV with an auto-generated name to the current
+#'   working directory), or a file path giving the CSV destination
 #'
 #' @return A list with:
 #'   \item{data}{Data frame with continuous and binary variables}
@@ -82,16 +84,13 @@ bin_gen <- function(continuous_var,
                                    stringsAsFactors = FALSE)
   colnames(data_out) <- c(continuous_var_name, var_name)
 
-  if (export_csv) {
-    fn <- paste0(continuous_var_name, "_", var_name, "_dgen.csv")
-    utils::write.csv(data_out, file = fn, row.names = FALSE)
-    message("Data saved to: ", file.path(getwd(), fn))
-  }
+  dgen_export(data_out, export_csv,
+              paste0(continuous_var_name, "_", var_name, "_dgen.csv"))
 
-  cat(sprintf("bin_gen: N = %d | prevalence target = %.3f, achieved = %.3f\n",
-              n, prevalence, achieved_prevalence))
-  cat(sprintf("Correlation target = %.3f, achieved = %.3f\n",
-              target_cor, achieved_cor))
+  message(sprintf("bin_gen: N = %d | prevalence target = %.3f, achieved = %.3f",
+                  n, prevalence, achieved_prevalence))
+  message(sprintf("Correlation target = %.3f, achieved = %.3f",
+                  target_cor, achieved_cor))
 
   invisible(list(
     data               = data_out,

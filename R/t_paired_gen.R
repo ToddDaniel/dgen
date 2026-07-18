@@ -21,7 +21,11 @@
 #'   (default = \code{"wide"})
 #' @param decimals Number of decimal places for rounding (default = 2)
 #' @param seed Integer seed for reproducibility (default = NULL)
-#' @param export_csv Logical; export data to CSV? (default = FALSE)
+#' @param export_csv Either \code{FALSE} (default; nothing is written),
+#'   \code{TRUE} (write a CSV with an auto-generated name to the current
+#'   working directory), or a file path giving the CSV destination.
+#'   When \code{output_format = "both"} and a file path is supplied,
+#'   \code{_wide}/\code{_long} is inserted before the extension
 #' @param run_analysis Logical; run the paired t-test automatically?
 #'   (default = TRUE)
 #'
@@ -160,29 +164,22 @@ t_paired_gen <- function(n,
                   paired = TRUE)
   } else NULL
 
-  if (export_csv) {
-    if (output_format %in% c("wide", "both")) {
-      fn <- paste0(var_name, "_paired_wide_dgen.csv")
-      utils::write.csv(data_wide, file = fn, row.names = FALSE)
-      message("Wide data saved to: ", file.path(getwd(), fn))
-    }
-    if (output_format %in% c("long", "both")) {
-      fn <- paste0(var_name, "_paired_long_dgen.csv")
-      utils::write.csv(data_long, file = fn, row.names = FALSE)
-      message("Long data saved to: ", file.path(getwd(), fn))
-    }
-  }
+  dgen_export_pair(data_wide, data_long, output_format, export_csv,
+                   paste0(var_name, "_paired_wide_dgen.csv"),
+                   paste0(var_name, "_paired_long_dgen.csv"))
 
-  cat("Paired t-test data generated in", iteration, "iterations.\n")
-  cat(sprintf("Correlation: target = %.3f, achieved = %.3f\n", correlation, cor_ach))
-  cat(sprintf("Mean difference: %.3f | Cohen's d (paired): %.3f\n", mean_diff, d_paired))
+  message("Paired t-test data generated in ", iteration, " iterations.")
+  message(sprintf("Correlation: target = %.3f, achieved = %.3f",
+                  correlation, cor_ach))
+  message(sprintf("Mean difference: %.3f | Cohen's d (paired): %.3f",
+                  mean_diff, d_paired))
 
   if (run_analysis && !is.null(t_test_results)) {
     p <- t_test_results$p.value
-    cat(sprintf("t(%d) = %.3f, p = %s\n",
-                as.integer(t_test_results$parameter),
-                as.numeric(t_test_results$statistic),
-                format.pval(p, digits = 3, eps = 0.001)))
+    message(sprintf("t(%d) = %.3f, p = %s",
+                    as.integer(t_test_results$parameter),
+                    as.numeric(t_test_results$statistic),
+                    format.pval(p, digits = 3, eps = 0.001)))
   }
 
   result <- list(

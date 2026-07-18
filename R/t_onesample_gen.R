@@ -13,7 +13,9 @@
 #' @param decimals Number of decimal places for rounding (default = 2)
 #' @param neg_data Logical; allow negative values? (default = TRUE)
 #' @param seed Integer seed for reproducibility (default = NULL)
-#' @param export_csv Logical; export data to a CSV file? (default = FALSE)
+#' @param export_csv Either \code{FALSE} (default; nothing is written),
+#'   \code{TRUE} (write a CSV with an auto-generated name to the current
+#'   working directory), or a file path giving the CSV destination
 #' @param run_analysis Logical; run one-sample t-test automatically?
 #'   (default = TRUE)
 #'
@@ -92,26 +94,22 @@ t_onesample_gen <- function(n,
     stats::t.test(data_out[[var_name]], mu = test_value)
   } else NULL
 
-  if (export_csv) {
-    filename <- paste0(var_name, "_dgen.csv")
-    utils::write.csv(data_out, file = filename, row.names = FALSE)
-    message("Data saved to: ", file.path(getwd(), filename))
-  }
+  dgen_export(data_out, export_csv, paste0(var_name, "_dgen.csv"))
 
-  cat("One-sample t-test data generated in", iter_count, "iterations.\n")
-  cat("Target  : Mean =", m, "| SD =", sd, "\n")
-  cat("Achieved: Mean =", round(achieved_mean, decimals + 2),
-      "| SD =", round(achieved_sd, decimals + 2), "\n")
-  cat("Cohen's d:", round(cohens_d, 3), "\n")
+  message("One-sample t-test data generated in ", iter_count, " iterations.")
+  message("Target  : Mean = ", m, " | SD = ", sd)
+  message("Achieved: Mean = ", round(achieved_mean, decimals + 2),
+          " | SD = ", round(achieved_sd, decimals + 2))
+  message("Cohen's d: ", round(cohens_d, 3))
 
   if (run_analysis && !is.null(t_test_results)) {
     p <- t_test_results$p.value
-    cat(sprintf("t(%d) = %.3f, p = %s\n",
-                as.integer(t_test_results$parameter),
-                as.numeric(t_test_results$statistic),
-                format.pval(p, digits = 3, eps = 0.001)))
-    cat(sprintf("Interpretation (two-tailed): %s at alpha = .05\n",
-                ifelse(p < .05, "SIGNIFICANT", "not significant")))
+    message(sprintf("t(%d) = %.3f, p = %s",
+                    as.integer(t_test_results$parameter),
+                    as.numeric(t_test_results$statistic),
+                    format.pval(p, digits = 3, eps = 0.001)))
+    message(sprintf("Interpretation (two-tailed): %s at alpha = .05",
+                    ifelse(p < .05, "SIGNIFICANT", "not significant")))
   }
 
   output <- list(

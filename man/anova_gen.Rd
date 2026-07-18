@@ -42,7 +42,11 @@ Defaults to \code{"Group1"}, \code{"Group2"}, etc.}
 
 \item{seed}{Integer seed for reproducibility (default = NULL)}
 
-\item{export_csv}{Logical; export data to CSV? (default = FALSE)}
+\item{export_csv}{Either \code{FALSE} (default; nothing is written),
+\code{TRUE} (write a CSV with an auto-generated name to the current
+working directory), or a file path giving the CSV destination.
+When \code{output_format = "both"} and a file path is supplied,
+\code{_wide}/\code{_long} is inserted before the extension}
 
 \item{output_format}{One of \code{"wide"}, \code{"long"}, or \code{"both"}
 (default = \code{"long"})}

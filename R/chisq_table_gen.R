@@ -15,7 +15,9 @@
 #' @param add_id Add ID column? (default = \code{TRUE})
 #' @param shuffle_rows Randomize row order? (default = \code{TRUE})
 #' @param seed Integer seed for reproducibility (default = \code{NULL})
-#' @param export_csv Logical; export data to CSV? (default = \code{FALSE})
+#' @param export_csv Either \code{FALSE} (default; nothing is written),
+#'   \code{TRUE} (write a CSV with an auto-generated name to the current
+#'   working directory), or a file path giving the CSV destination
 #' @param run_analysis Logical; run chi-square test automatically?
 #'   (default = \code{TRUE})
 #'
@@ -156,17 +158,14 @@ chisq_table_gen <- function(nrows,
     )
   }
 
-  if (export_csv) {
-    fn <- paste0(row_var, "_by_", col_var, "_dgen.csv")
-    utils::write.csv(data, file = fn, row.names = FALSE)
-    message("Data saved to: ", file.path(getwd(), fn))
-  }
+  dgen_export(data, export_csv,
+              paste0(row_var, "_by_", col_var, "_dgen.csv"))
 
-  cat(sprintf("chisq_table_gen: %d x %d table, N = %d\n", nrows, ncols, n))
+  message(sprintf("chisq_table_gen: %d x %d table, N = %d", nrows, ncols, n))
   if (run_analysis) {
     chi_s <- as.numeric(chisq_test_results$statistic)
     df_v  <- (nrows - 1) * (ncols - 1)
-    cat(sprintf("chi2(%d) = %.3f, p = %s, Cramer's V = %.3f\n",
+    message(sprintf("chi2(%d) = %.3f, p = %s, Cramer's V = %.3f",
                 df_v, chi_s,
                 format.pval(chisq_test_results$p.value, digits = 3, eps = 0.001),
                 cramers_v))

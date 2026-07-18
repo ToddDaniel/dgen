@@ -49,7 +49,11 @@ SD for all cells) or a matrix matching \code{cell_means} dimensions}
 
 \item{seed}{Integer seed for reproducibility (default = \code{NULL})}
 
-\item{export_csv}{Logical; export data to CSV? (default = \code{FALSE})}
+\item{export_csv}{Either \code{FALSE} (default; nothing is written),
+\code{TRUE} (write a CSV with an auto-generated name to the current
+working directory), or a file path giving the CSV destination.
+When \code{output_format = "both"} and a file path is supplied,
+\code{_wide}/\code{_long} is inserted before the extension}
 
 \item{output_format}{\code{"wide"}, \code{"long"}, or \code{"both"}
 (default = \code{"long"})}

@@ -20,7 +20,9 @@
 #'     \item \code{NULL} for uncorrelated variables (default)
 #'   }
 #' @param seed Integer seed for reproducibility (default = \code{NULL})
-#' @param export_csv Logical; export data to CSV? (default = \code{FALSE})
+#' @param export_csv Either \code{FALSE} (default; nothing is written),
+#'   \code{TRUE} (write a CSV with an auto-generated name to the current
+#'   working directory), or a file path giving the CSV destination
 #'
 #' @return A list with:
 #'   \item{data}{Data frame with all generated variables}
@@ -186,19 +188,16 @@ make_predictors <- function(n,
 
   achieved_cors <- stats::cor(data_out)
 
-  if (export_csv) {
-    if (n_vars <= 2) {
-      fn <- paste0(paste(var_names, collapse = "_"), "_dgen.csv")
-    } else {
-      fn <- paste0(var_names[1], "_", var_names[2], "_plus",
-                   n_vars - 2, "_dgen.csv")
-    }
-    utils::write.csv(data_out, file = fn, row.names = FALSE)
-    message("Data saved to: ", file.path(getwd(), fn))
+  default_fn <- if (n_vars <= 2) {
+    paste0(paste(var_names, collapse = "_"), "_dgen.csv")
+  } else {
+    paste0(var_names[1], "_", var_names[2], "_plus",
+           n_vars - 2, "_dgen.csv")
   }
+  dgen_export(data_out, export_csv, default_fn)
 
-  cat(sprintf("make_predictors: N = %d, %d variable(s): %s\n",
-              n, n_vars, paste(var_names, collapse = ", ")))
+  message(sprintf("make_predictors: N = %d, %d variable(s): %s",
+                  n, n_vars, paste(var_names, collapse = ", ")))
 
   invisible(list(
     data                  = data_out,

@@ -54,7 +54,11 @@ format (default = \code{"Measurement"})}
 
 \item{seed}{Integer seed for reproducibility (default = NULL)}
 
-\item{export_csv}{Logical; export data to CSV? (default = FALSE)}
+\item{export_csv}{Either \code{FALSE} (default; nothing is written),
+\code{TRUE} (write a CSV with an auto-generated name to the current
+working directory), or a file path giving the CSV destination.
+When \code{output_format = "both"} and a file path is supplied,
+\code{_wide}/\code{_long} is inserted before the extension}
 
 \item{run_analysis}{Logical; run the paired t-test automatically?
 (default = TRUE)}

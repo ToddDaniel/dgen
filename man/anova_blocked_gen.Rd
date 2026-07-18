@@ -2,7 +2,7 @@
 % Please edit documentation in R/anova_blocked_gen.R
 \name{anova_blocked_gen}
 \alias{anova_blocked_gen}
-\title{Generate Data for Randomized Block Design ANOVA}
+\title{Generate Data for Randomized Block (Repeated-Measures) ANOVA}
 \usage{
 anova_blocked_gen(
   n_per_block,
@@ -54,7 +54,11 @@ same block (default = 0.70)}
 
 \item{seed}{Integer seed for reproducibility (default = \code{NULL})}
 
-\item{export_csv}{Logical; export data to CSV? (default = \code{FALSE})}
+\item{export_csv}{Either \code{FALSE} (default; nothing is written),
+\code{TRUE} (write a CSV with an auto-generated name to the current
+working directory), or a file path giving the CSV destination.
+When \code{output_format = "both"} and a file path is supplied,
+\code{_wide}/\code{_long} is inserted before the extension}
 
 \item{output_format}{\code{"wide"}, \code{"long"}, or \code{"both"}
 (default = \code{"long"})}
@@ -82,7 +86,30 @@ where each block is exposed to all treatments. Uses iterative refinement
 with \code{MASS::mvrnorm()} to achieve EXACT target means and SDs while
 maintaining within-block correlation.
 }
+\details{
+This design is the randomized-block analogue of a one-way repeated-measures
+(within-subjects) ANOVA: blocks play the role of subjects, and every
+block/subject is measured under all treatment conditions.
+}
 \examples{
+# Small 2-block x 2-treatment design that converges quickly
+quick <- anova_blocked_gen(
+  n_per_block      = 5,
+  n_blocks         = 2,
+  block_labels     = c("Morning", "Evening"),
+  n_treatments     = 2,
+  treatment_labels = c("Method_A", "Method_B"),
+  cell_means       = matrix(c(10, 12,
+                              14, 16), nrow = 2, byrow = TRUE),
+  within_cell_sd   = 2,
+  seed             = 42
+)
+quick$anova_table
+
+\donttest{
+# Larger textbook-style example. The iterative refinement needed to hit
+# exact cell means/SDs under the within-block correlation constraint can
+# take ~30 seconds for a design of this size.
 result <- anova_blocked_gen(
   n_per_block          = 3,
   n_blocks             = 4,
@@ -103,5 +130,9 @@ result <- anova_blocked_gen(
   seed                 = 12345
 )
 result$anova_table
+}
 
 }
+\concept{randomized block design}
+\concept{repeated measures ANOVA}
+\concept{within-subjects design}

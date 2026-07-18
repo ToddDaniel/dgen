@@ -26,7 +26,9 @@ vector:
 
 \item{seed}{Integer seed for reproducibility (default = \code{NULL})}
 
-\item{export_csv}{Logical; export data to CSV? (default = \code{FALSE})}
+\item{export_csv}{Either \code{FALSE} (default; nothing is written),
+\code{TRUE} (write a CSV with an auto-generated name to the current
+working directory), or a file path giving the CSV destination}
 }
 \value{
 A list with:

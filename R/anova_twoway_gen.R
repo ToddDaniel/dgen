@@ -19,7 +19,11 @@
 #' @param dv_name Name for the dependent variable (default = \code{"Score"})
 #' @param decimals Number of decimal places for rounding DV (default = 2)
 #' @param seed Integer seed for reproducibility (default = \code{NULL})
-#' @param export_csv Logical; export data to CSV? (default = \code{FALSE})
+#' @param export_csv Either \code{FALSE} (default; nothing is written),
+#'   \code{TRUE} (write a CSV with an auto-generated name to the current
+#'   working directory), or a file path giving the CSV destination.
+#'   When \code{output_format = "both"} and a file path is supplied,
+#'   \code{_wide}/\code{_long} is inserted before the extension
 #' @param output_format \code{"wide"}, \code{"long"}, or \code{"both"}
 #'   (default = \code{"long"})
 #' @param run_analysis Logical; run two-way ANOVA automatically?
@@ -334,31 +338,22 @@ anova_twoway_gen <- function(factor_a_levels,
     }
   }
 
-  if (export_csv) {
-    if (output_format %in% c("long", "both")) {
-      fn <- paste0(dv_name, "_twoway_long_dgen.csv")
-      utils::write.csv(data_long, file = fn, row.names = FALSE)
-      message("Long data saved to: ", file.path(getwd(), fn))
-    }
-    if (output_format %in% c("wide", "both")) {
-      fn <- paste0(dv_name, "_twoway_wide_dgen.csv")
-      utils::write.csv(data_wide, file = fn, row.names = FALSE)
-      message("Wide data saved to: ", file.path(getwd(), fn))
-    }
-  }
+  dgen_export_pair(data_wide, data_long, output_format, export_csv,
+                   paste0(dv_name, "_twoway_wide_dgen.csv"),
+                   paste0(dv_name, "_twoway_long_dgen.csv"))
 
-  cat(sprintf("anova_twoway_gen: %d x %d design, n_per_cell = %d, N = %d\n",
-              factor_a_levels, factor_b_levels, n_per_cell, N))
+  message(sprintf("anova_twoway_gen: %d x %d design, n_per_cell = %d, N = %d",
+                  factor_a_levels, factor_b_levels, n_per_cell, N))
   if (run_analysis) {
-    cat(sprintf("%s: F(%d,%d) = %.3f, p = %s\n",
-                factor_a_name, df_A, df_Error, F_A,
-                format.pval(p_A, digits = 3, eps = 0.001)))
-    cat(sprintf("%s: F(%d,%d) = %.3f, p = %s\n",
-                factor_b_name, df_B, df_Error, F_B,
-                format.pval(p_B, digits = 3, eps = 0.001)))
-    cat(sprintf("Interaction: F(%d,%d) = %.3f, p = %s\n",
-                df_AB, df_Error, F_AB,
-                format.pval(p_AB, digits = 3, eps = 0.001)))
+    message(sprintf("%s: F(%d,%d) = %.3f, p = %s",
+                    factor_a_name, df_A, df_Error, F_A,
+                    format.pval(p_A, digits = 3, eps = 0.001)))
+    message(sprintf("%s: F(%d,%d) = %.3f, p = %s",
+                    factor_b_name, df_B, df_Error, F_B,
+                    format.pval(p_B, digits = 3, eps = 0.001)))
+    message(sprintf("Interaction: F(%d,%d) = %.3f, p = %s",
+                    df_AB, df_Error, F_AB,
+                    format.pval(p_AB, digits = 3, eps = 0.001)))
   }
 
   result <- list(

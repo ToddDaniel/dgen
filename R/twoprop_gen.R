@@ -17,7 +17,9 @@
 #' @param category_labels Character vector of length 2 for the outcome
 #'   categories (default = \code{c("Failure", "Success")})
 #' @param seed Integer seed for reproducibility (default = NULL)
-#' @param export_csv Logical; export data to CSV? (default = FALSE)
+#' @param export_csv Either \code{FALSE} (default; nothing is written),
+#'   \code{TRUE} (write a CSV with an auto-generated name to the current
+#'   working directory), or a file path giving the CSV destination
 #' @param run_analysis Logical; run proportion and chi-square tests
 #'   automatically? (default = TRUE)
 #'
@@ -119,21 +121,18 @@ twoprop_gen <- function(n1,
     assumptions$all_adequate <- all(unlist(assumptions))
   }
 
-  if (export_csv) {
-    fn <- paste0(var_name, "_by_", group_name, "_dgen.csv")
-    utils::write.csv(data_out, file = fn, row.names = FALSE)
-    message("Data saved to: ", file.path(getwd(), fn))
-  }
+  dgen_export(data_out, export_csv,
+              paste0(var_name, "_by_", group_name, "_dgen.csv"))
 
-  cat(sprintf("Two-sample proportions: %s = %.3f | %s = %.3f\n",
-              label1, p1_ach, label2, p2_ach))
-  cat(sprintf("Difference = %.3f | Cohen's h = %.3f | OR = %.3f\n",
-              diff_val, cohens_h, odds_ratio))
+  message(sprintf("Two-sample proportions: %s = %.3f | %s = %.3f",
+                  label1, p1_ach, label2, p2_ach))
+  message(sprintf("Difference = %.3f | Cohen's h = %.3f | OR = %.3f",
+                  diff_val, cohens_h, odds_ratio))
   if (run_analysis) {
     p_val <- prop_test_results$p.value
-    cat(sprintf("prop.test: chi2 = %.3f, p = %s\n",
-                as.numeric(prop_test_results$statistic),
-                format.pval(p_val, digits = 3, eps = 0.001)))
+    message(sprintf("prop.test: chi2 = %.3f, p = %s",
+                    as.numeric(prop_test_results$statistic),
+                    format.pval(p_val, digits = 3, eps = 0.001)))
   }
 
   result <- list(

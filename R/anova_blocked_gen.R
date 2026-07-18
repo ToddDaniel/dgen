@@ -1,9 +1,13 @@
-#' Generate Data for Randomized Block Design ANOVA
+#' Generate Data for Randomized Block (Repeated-Measures) ANOVA
 #'
 #' Creates data for a randomized block (two-factor without replication) ANOVA
 #' where each block is exposed to all treatments. Uses iterative refinement
 #' with \code{MASS::mvrnorm()} to achieve EXACT target means and SDs while
 #' maintaining within-block correlation.
+#'
+#' This design is the randomized-block analogue of a one-way repeated-measures
+#' (within-subjects) ANOVA: blocks play the role of subjects, and every
+#' block/subject is measured under all treatment conditions.
 #'
 #' @param n_per_block Number of replications per block (minimum 2)
 #' @param n_blocks Number of blocks (minimum 2)
@@ -22,7 +26,11 @@
 #' @param dv_name Name for the dependent variable (default = \code{"Score"})
 #' @param decimals Number of decimal places for rounding DV (default = 2)
 #' @param seed Integer seed for reproducibility (default = \code{NULL})
-#' @param export_csv Logical; export data to CSV? (default = \code{FALSE})
+#' @param export_csv Either \code{FALSE} (default; nothing is written),
+#'   \code{TRUE} (write a CSV with an auto-generated name to the current
+#'   working directory), or a file path giving the CSV destination.
+#'   When \code{output_format = "both"} and a file path is supplied,
+#'   \code{_wide}/\code{_long} is inserted before the extension
 #' @param output_format \code{"wide"}, \code{"long"}, or \code{"both"}
 #'   (default = \code{"long"})
 #' @param run_analysis Logical; run randomized block ANOVA automatically?
@@ -42,6 +50,24 @@
 #'   \item{iterations}{Vector of iteration counts per block}
 #'
 #' @examples
+#' # Small 2-block x 2-treatment design that converges quickly
+#' quick <- anova_blocked_gen(
+#'   n_per_block      = 5,
+#'   n_blocks         = 2,
+#'   block_labels     = c("Morning", "Evening"),
+#'   n_treatments     = 2,
+#'   treatment_labels = c("Method_A", "Method_B"),
+#'   cell_means       = matrix(c(10, 12,
+#'                               14, 16), nrow = 2, byrow = TRUE),
+#'   within_cell_sd   = 2,
+#'   seed             = 42
+#' )
+#' quick$anova_table
+#'
+#' \donttest{
+#' # Larger textbook-style example. The iterative refinement needed to hit
+#' # exact cell means/SDs under the within-block correlation constraint can
+#' # take ~30 seconds for a design of this size.
 #' result <- anova_blocked_gen(
 #'   n_per_block          = 3,
 #'   n_blocks             = 4,
@@ -62,6 +88,11 @@
 #'   seed                 = 12345
 #' )
 #' result$anova_table
+#' }
+#'
+#' @concept repeated measures ANOVA
+#' @concept within-subjects design
+#' @concept randomized block design
 #'
 #' @export
 anova_blocked_gen <- function(n_per_block,
@@ -361,29 +392,20 @@ anova_blocked_gen <- function(n_per_block,
     }
   }
 
-  if (export_csv) {
-    if (output_format %in% c("long", "both")) {
-      fn <- paste0(dv_name, "_blocked_long_dgen.csv")
-      utils::write.csv(data_long, file = fn, row.names = FALSE)
-      message("Long data saved to: ", file.path(getwd(), fn))
-    }
-    if (output_format %in% c("wide", "both")) {
-      fn <- paste0(dv_name, "_blocked_wide_dgen.csv")
-      utils::write.csv(data_wide, file = fn, row.names = FALSE)
-      message("Wide data saved to: ", file.path(getwd(), fn))
-    }
-  }
+  dgen_export_pair(data_wide, data_long, output_format, export_csv,
+                   paste0(dv_name, "_blocked_wide_dgen.csv"),
+                   paste0(dv_name, "_blocked_long_dgen.csv"))
 
-  cat(sprintf(
-    "anova_blocked_gen: %d blocks x %d treatments, n_per_block = %d, N = %d\n",
+  message(sprintf(
+    "anova_blocked_gen: %d blocks x %d treatments, n_per_block = %d, N = %d",
     n_blocks, n_treatments, n_per_block, N))
   if (run_analysis) {
-    cat(sprintf("%s: F(%d,%d) = %.3f, p = %s\n",
-                treatment_name, df_treat, df_error, F_treat,
-                format.pval(p_treat, digits = 3, eps = 0.001)))
-    cat(sprintf("%s: F(%d,%d) = %.3f, p = %s\n",
-                block_name, df_blocks, df_error, F_blocks,
-                format.pval(p_blocks, digits = 3, eps = 0.001)))
+    message(sprintf("%s: F(%d,%d) = %.3f, p = %s",
+                    treatment_name, df_treat, df_error, F_treat,
+                    format.pval(p_treat, digits = 3, eps = 0.001)))
+    message(sprintf("%s: F(%d,%d) = %.3f, p = %s",
+                    block_name, df_blocks, df_error, F_blocks,
+                    format.pval(p_blocks, digits = 3, eps = 0.001)))
   }
 
   result <- list(

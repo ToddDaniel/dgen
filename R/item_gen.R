@@ -11,7 +11,9 @@
 #' @param decimals Decimal places for items (default = 0 for integers)
 #' @param var_prefix Prefix for item names (default = \code{"Item"})
 #' @param seed Integer seed for reproducibility (default = \code{NULL})
-#' @param export_csv Logical; export to CSV? (default = \code{FALSE})
+#' @param export_csv Either \code{FALSE} (default; nothing is written),
+#'   \code{TRUE} (write a CSV with an auto-generated name to the current
+#'   working directory), or a file path giving the CSV destination
 #' @param run_analysis Logical; run item analysis? (default = \code{TRUE})
 #'
 #' @return A list with:
@@ -145,15 +147,11 @@ item_gen <- function(composite,
     )
   }
 
-  if (export_csv) {
-    fn <- paste0(var_prefix, "_items_dgen.csv")
-    utils::write.csv(item_data, file = fn, row.names = FALSE)
-    message("Data saved to: ", file.path(getwd(), fn))
-  }
+  dgen_export(item_data, export_csv, paste0(var_prefix, "_items_dgen.csv"))
 
-  cat(sprintf("item_gen: %d items, n = %d\n", n_items, n))
-  cat(sprintf("Mean abs error = %.4f | Cronbach's alpha = %.3f\n",
-              mean_abs_error, alpha))
+  message(sprintf("item_gen: %d items, n = %d", n_items, n))
+  message(sprintf("Mean abs error = %.4f | Cronbach's alpha = %.3f",
+                  mean_abs_error, alpha))
 
   result <- list(
     data               = item_data,

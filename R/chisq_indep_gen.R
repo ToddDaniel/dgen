@@ -18,7 +18,9 @@
 #' @param cramers_v Target Cramér's V (0–1). Required when
 #'   \code{association = "effect_size"}.
 #' @param seed Integer seed for reproducibility (default = NULL)
-#' @param export_csv Logical; export data to CSV? (default = FALSE)
+#' @param export_csv Either \code{FALSE} (default; nothing is written),
+#'   \code{TRUE} (write a CSV with an auto-generated name to the current
+#'   working directory), or a file path giving the CSV destination
 #' @param run_analysis Logical; run chi-square test automatically?
 #'   (default = TRUE)
 #'
@@ -171,17 +173,14 @@ chisq_indep_gen <- function(n,
     )
   }
 
-  if (export_csv) {
-    fn <- paste0(row_var, "_by_", col_var, "_dgen.csv")
-    utils::write.csv(data_out, file = fn, row.names = FALSE)
-    message("Data saved to: ", file.path(getwd(), fn))
-  }
+  dgen_export(data_out, export_csv,
+              paste0(row_var, "_by_", col_var, "_dgen.csv"))
 
-  cat(sprintf("Chi-square independence data: %dx%d table, n = %d\n", r, c, n))
-  print(stats::addmargins(ctab))
+  message(sprintf("Chi-square independence data: %dx%d table, n = %d", r, c, n))
+  message(paste(utils::capture.output(stats::addmargins(ctab)), collapse = "\n"))
   if (run_analysis && !is.null(chisq_test_results)) {
     p_val <- chisq_test_results$p.value
-    cat(sprintf("chi2(%d) = %.3f, p = %s | Cramer's V = %.3f\n",
+    message(sprintf("chi2(%d) = %.3f, p = %s | Cramer's V = %.3f",
                 df,
                 as.numeric(chisq_test_results$statistic),
                 format.pval(p_val, digits = 3, eps = 0.001),

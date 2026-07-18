@@ -15,7 +15,9 @@
 #' @param var_name Name for the categorical variable (default =
 #'   \code{"Category"})
 #' @param seed Integer seed for reproducibility (default = NULL)
-#' @param export_csv Logical; export data to CSV? (default = FALSE)
+#' @param export_csv Either \code{FALSE} (default; nothing is written),
+#'   \code{TRUE} (write a CSV with an auto-generated name to the current
+#'   working directory), or a file path giving the CSV destination
 #' @param run_analysis Logical; run chi-square test automatically?
 #'   (default = TRUE)
 #'
@@ -125,17 +127,16 @@ chisq_gof_gen <- function(n,
     )
   }
 
-  if (export_csv) {
-    fn <- paste0(var_name, "_GoodnessOfFit_dgen.csv")
-    utils::write.csv(data_out, file = fn, row.names = FALSE)
-    message("Data saved to: ", file.path(getwd(), fn))
-  }
+  dgen_export(data_out, export_csv,
+              paste0(var_name, "_GoodnessOfFit_dgen.csv"))
 
-  cat(sprintf("Chi-square GOF data generated (n = %d, k = %d categories)\n", n, k))
-  print(contingency_table, row.names = FALSE)
+  message(sprintf("Chi-square GOF data generated (n = %d, k = %d categories)",
+                  n, k))
+  message(paste(utils::capture.output(
+    print(contingency_table, row.names = FALSE)), collapse = "\n"))
   if (run_analysis && !is.null(chisq_test_results)) {
     p_val <- chisq_test_results$p.value
-    cat(sprintf("chi2(%d) = %.3f, p = %s | Cramer's V = %.3f\n",
+    message(sprintf("chi2(%d) = %.3f, p = %s | Cramer's V = %.3f",
                 as.integer(chisq_test_results$parameter),
                 as.numeric(chisq_test_results$statistic),
                 format.pval(p_val, digits = 3, eps = 0.001),

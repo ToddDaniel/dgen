@@ -27,7 +27,7 @@
 #'   \item{group1_stats}{Proportion and counts for Group 1}
 #'   \item{group2_stats}{Proportion and counts for Group 2}
 #'   \item{difference}{Difference in proportions (Group 1 - Group 2)}
-#'   \item{pooled_proportion}{Pooled proportion under H₀}
+#'   \item{pooled_proportion}{Pooled proportion under the null hypothesis (H0)}
 #'   \item{cohens_h}{Cohen's h effect size}
 #'   \item{odds_ratio}{Odds ratio (Group 1 / Group 2)}
 #'   \item{risk_ratio}{Risk ratio (Group 1 / Group 2)}

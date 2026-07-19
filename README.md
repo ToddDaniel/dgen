@@ -34,6 +34,9 @@ devtools::install_github("ToddDaniel/dgen")
   `f_to_means()`, `h_to_prop()`
 - **Batch generation**: `batch_gen()` — many unique per-student datasets
   from one set of targets, with a compiled instructor answer key
+- **Same stats, different graphs**: `anscombe_gen()` — Anscombe-style
+  datasets with identical statistics and regression line but completely
+  different shapes
 
 ## License
 

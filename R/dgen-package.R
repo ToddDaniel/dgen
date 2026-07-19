@@ -57,6 +57,13 @@
 #'   \item{\code{\link{item_gen}}}{Back-solved items from a composite score}
 #' }
 #'
+#' @section Same statistics, different graphs:
+#' \describe{
+#'   \item{\code{\link{anscombe_gen}}}{Anscombe-style datasets with
+#'     identical means, SDs, correlation, and regression line, but
+#'     completely different shapes when plotted}
+#' }
+#'
 #' @section Batch generation:
 #' \describe{
 #'   \item{\code{\link{batch_gen}}}{Many unique per-student datasets from

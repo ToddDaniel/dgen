@@ -11,6 +11,11 @@
   targets via the Fleishman power method. Reports achieved sample
   skewness/kurtosis and runs normality diagnostics (Shapiro-Wilk) so
   the data visibly fail the checks they are built to fail.
+- New `anscombe_gen()`: Anscombe-style "same statistics, different
+  graphs" datasets — every panel shares exact means, SDs, correlation,
+  and regression line, with shapes `linear`, `curved`, `outlier`,
+  `clusters`, and `fan` (heteroscedastic). Long-format output ready for
+  faceted plotting.
 
 # dgen 0.1.0
 

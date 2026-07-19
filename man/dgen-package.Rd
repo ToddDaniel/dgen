@@ -77,6 +77,15 @@ heavy/light-tailed, or bimodal) with an exact mean and SD}
 }
 }
 
+\section{Same statistics, different graphs}{
+
+\describe{
+\item{\code{\link{anscombe_gen}}}{Anscombe-style datasets with
+identical means, SDs, correlation, and regression line, but
+completely different shapes when plotted}
+}
+}
+
 \section{Batch generation}{
 
 \describe{

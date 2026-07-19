@@ -1,4 +1,7 @@
-# dgen (development version)
+# dgen 0.2.0
+
+11 new functions across 4 new families, all additive — no changes to
+any function from 0.1.0.
 
 - New `batch_gen()`: generate many unique per-student datasets from one
   set of targets (distinct seeds), with a compiled instructor answer

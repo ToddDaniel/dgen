@@ -30,6 +30,18 @@
   (optional via `answer_key = FALSE`). Accepts a data frame, a dgen
   generator result, or a CSV path; `export_csv` writes only the
   student-facing data, never the key.
+- New nonparametric family (six generators reporting R's canonical
+  tests, matching SPSS/JASP): `sign_gen()` (exact k above the target
+  median, or matched-pairs preference; exact binomial plus
+  continuity-corrected normal approximation), `mannwhitney_gen()`,
+  `signedrank_gen()`, `kruskal_gen()` (with Dunn's Holm-adjusted
+  post-hoc), `friedman_gen()` (with Kendall's W), and `spearman_gen()`
+  (targeted rho, monotonic-nonlinear by default). Medians are hit
+  exactly via additive shift; `spread` is an SD-like approximate
+  scale; integer/Likert data by default (`decimals = 0`) with optional
+  `scale_min`/`scale_max` bounds and achievable-median validation;
+  shapes reuse the `dist_gen()` engine. Effect sizes: r = z/sqrt(n),
+  rank-biserial, epsilon-squared / eta-squared[H], Kendall's W.
 
 # dgen 0.1.0
 

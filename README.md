@@ -29,6 +29,8 @@ devtools::install_github("ToddDaniel/dgen")
   `anova_mixed_gen()`
 - **Chi-square family**: `chisq_gof_gen()`, `chisq_indep_gen()`, `chisq_table_gen()`
 - **Proportion family**: `oneprop_gen()`, `twoprop_gen()`, `mcnemar_gen()`
+- **Nonparametric family**: `sign_gen()`, `mannwhitney_gen()`,
+  `signedrank_gen()`, `kruskal_gen()`, `friedman_gen()`, `spearman_gen()`
 - **Regression family**: `make_predictors()`, `bin_gen()`, `reg_gen()`
 - **Psychometric scale family**: `scale_gen()`, `item_gen()`
 - **Effect-size helpers**: `d_to_means()`, `d_to_means_paired()`,

@@ -62,6 +62,24 @@ split-plot) ANOVA data}
 }
 }
 
+\section{Nonparametric family}{
+
+\describe{
+\item{\code{\link{sign_gen}}}{Sign test data (one-sample median or
+matched-pairs preference) with an exact count above the target}
+\item{\code{\link{mannwhitney_gen}}}{Mann-Whitney U data: two
+groups with exact medians and non-normal shape}
+\item{\code{\link{signedrank_gen}}}{Wilcoxon signed-rank data:
+paired measurements with exact medians}
+\item{\code{\link{kruskal_gen}}}{Kruskal-Wallis data: k groups
+with exact medians, Dunn's post-hoc}
+\item{\code{\link{friedman_gen}}}{Friedman test data: repeated
+measures with exact condition medians}
+\item{\code{\link{spearman_gen}}}{Spearman correlation data:
+monotonic (or linear) relationship with targeted rho}
+}
+}
+
 \section{Regression family}{
 
 \describe{

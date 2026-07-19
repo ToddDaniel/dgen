@@ -38,6 +38,9 @@ devtools::install_github("ToddDaniel/dgen")
 - **Same stats, different graphs**: `anscombe_gen()` — Anscombe-style
   datasets with identical statistics and regression line but completely
   different shapes
+- **Data cleaning**: `dirty_data()` — plant known defects (missing
+  values, outliers, typos, inconsistent coding, duplicates) in any
+  dataset, with an instructor answer key
 
 ## License
 

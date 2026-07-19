@@ -79,6 +79,15 @@ split-plot) ANOVA data}
 }
 }
 
+\section{Data cleaning}{
+
+\describe{
+\item{\code{\link{dirty_data}}}{Plant known defects (missing values,
+outliers, typos, inconsistent coding, duplicate rows) in any
+dataset, with an instructor answer key}
+}
+}
+
 \section{Same statistics, different graphs}{
 
 \describe{

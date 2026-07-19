@@ -59,6 +59,13 @@
 #'   \item{\code{\link{item_gen}}}{Back-solved items from a composite score}
 #' }
 #'
+#' @section Data cleaning:
+#' \describe{
+#'   \item{\code{\link{dirty_data}}}{Plant known defects (missing values,
+#'     outliers, typos, inconsistent coding, duplicate rows) in any
+#'     dataset, with an instructor answer key}
+#' }
+#'
 #' @section Same statistics, different graphs:
 #' \describe{
 #'   \item{\code{\link{anscombe_gen}}}{Anscombe-style datasets with

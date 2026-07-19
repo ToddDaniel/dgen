@@ -22,6 +22,14 @@
   satisfied by construction), the standard split-plot error partition
   with both error terms, effect sizes per effect, and Tukey post-hocs
   on marginal means when the interaction is not significant.
+- New `dirty_data()`: plant known defects in any dataset for teaching
+  data screening and cleaning — missing values, statistically
+  plausible outliers, data-entry typos (shifted decimals, transposed
+  digits), inconsistent category coding, and duplicated rows — with a
+  unified instructor answer key recording every planted defect
+  (optional via `answer_key = FALSE`). Accepts a data frame, a dgen
+  generator result, or a CSV path; `export_csv` writes only the
+  student-facing data, never the key.
 
 # dgen 0.1.0
 

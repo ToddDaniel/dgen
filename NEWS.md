@@ -16,6 +16,12 @@
   and regression line, with shapes `linear`, `curved`, `outlier`,
   `clusters`, and `fan` (heteroscedastic). Long-format output ready for
   faceted plotting.
+- New `anova_mixed_gen()`: mixed-design (between x within, split-plot)
+  ANOVA data — the classic Group x Time design. Exact per-cell means
+  and SDs, compound-symmetric within-subject correlation (sphericity
+  satisfied by construction), the standard split-plot error partition
+  with both error terms, effect sizes per effect, and Tukey post-hocs
+  on marginal means when the interaction is not significant.
 
 # dgen 0.1.0
 

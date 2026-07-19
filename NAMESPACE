@@ -2,6 +2,7 @@
 
 export(anova_blocked_gen)
 export(anova_gen)
+export(anova_mixed_gen)
 export(anova_twoway_gen)
 export(anscombe_gen)
 export(batch_gen)

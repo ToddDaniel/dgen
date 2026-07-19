@@ -25,7 +25,8 @@ devtools::install_github("ToddDaniel/dgen")
 
 - **Core generators**: `stat_gen()`, `dist_gen()`, `cor_gen()`
 - **T-test family**: `t_onesample_gen()`, `t_indep_gen()`, `t_paired_gen()`
-- **ANOVA family**: `anova_gen()`, `anova_twoway_gen()`, `anova_blocked_gen()`
+- **ANOVA family**: `anova_gen()`, `anova_twoway_gen()`, `anova_blocked_gen()`,
+  `anova_mixed_gen()`
 - **Chi-square family**: `chisq_gof_gen()`, `chisq_indep_gen()`, `chisq_table_gen()`
 - **Proportion family**: `oneprop_gen()`, `twoprop_gen()`, `mcnemar_gen()`
 - **Regression family**: `make_predictors()`, `bin_gen()`, `reg_gen()`

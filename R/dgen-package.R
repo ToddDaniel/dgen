@@ -28,6 +28,8 @@
 #'   \item{\code{\link{anova_gen}}}{One-way ANOVA data}
 #'   \item{\code{\link{anova_twoway_gen}}}{Two-way factorial ANOVA data}
 #'   \item{\code{\link{anova_blocked_gen}}}{Randomized block design ANOVA data}
+#'   \item{\code{\link{anova_mixed_gen}}}{Mixed (between x within /
+#'     split-plot) ANOVA data}
 #' }
 #'
 #' @section Chi-square family:

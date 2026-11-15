@@ -81,15 +81,12 @@ standardised, Gaussian noise is added, and a threshold based on
 \code{prevalence} is applied.
 }
 \examples{
-preds <- make_predictors(n = 250,
-  FP = c(m = 2.8, sd = 0.9),
-  MD = c(m = 2.6, sd = 0.85),
-  correlations = list("FP-MD" = 0.40),
-  seed = 42)
+set.seed(42)
+preds <- data.frame(FP = rnorm(250, 2.8, 0.9), MD = rnorm(250, 2.6, 0.85))
 
 # Continuous outcome
 result <- reg_gen(
-  predictors   = preds$data,
+  predictors   = preds,
   betas        = c(intercept = 10.5, FP = 0.20, MD = 0.48),
   outcome_name = "FS_log",
   r_squared    = 0.50
@@ -97,7 +94,7 @@ result <- reg_gen(
 
 # Binary outcome
 fraud <- reg_gen(
-  predictors   = preds$data,
+  predictors   = preds,
   betas        = c(intercept = -1, FP = 0.5, MD = 0.8),
   outcome_name = "Fraud",
   outcome_type = "binary",

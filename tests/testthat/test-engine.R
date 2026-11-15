@@ -159,9 +159,16 @@ test_that("impossible means and SDs stop at once, naming the nearest", {
   expect_error(exact_mv(7, 2.45, 1.2, decimals = 1),
                "With 7 values rounded to 1 decimal place, the mean cannot be 2.45",
                fixed = TRUE)
-  started <- Sys.time()
+})
+
+test_that("impossible requests stop before any data are generated", {
+  # No random numbers are used, on any computer, however slow.
+  set.seed(1)
+  before <- .Random.seed
   try(exact_mv(5, 75.5, 8.2, decimals = 0), silent = TRUE)
-  expect_lt(as.numeric(Sys.time() - started, units = "secs"), 0.5)
+  try(exact_mv(10, 50.3, 1, decimals = 0), silent = TRUE)
+  try(exact_mv(30, c(50, 55), c(10, 10), r = 1), silent = TRUE)
+  expect_identical(.Random.seed, before)
 })
 
 test_that("the nearest SDs named in the message really are reachable", {
@@ -219,25 +226,25 @@ test_that("badly formed requests get plain-language messages", {
                "cannot all be true at once")
 })
 
-test_that("extreme corners give up with advice instead of spinning", {
+test_that("extreme corners give up after a fixed number of tries", {
   skip_on_cran()
+  # The limit is an amount of work, not seconds on a clock, so it is the
+  # same on every computer: 4e7 / (500 + n * variables), to the nearest 1,000.
+  expect_equal(eval(formals(exact_mv)$max_iter, list(n = 15, m = 1:3)), 73000)
+  expect_equal(eval(formals(exact_mv)$max_iter, list(n = 500, m = 1:5)), 13000)
   r <- matrix(0.5, 5, 5)
   diag(r) <- 1
   set.seed(1)
-  started <- Sys.time()
   expect_error(exact_mv(30, rep(3, 5), rep(1, 5), r, decimals = 0),
                "could not find data matching every target after 62,000 tries")
-  expect_lt(as.numeric(Sys.time() - started, units = "secs"), 5)
 })
 
-test_that("typical calls are fast", {
-  skip_on_cran()
+test_that("typical calls need few tries", {
   set.seed(1)
-  elapsed <- system.time({
-    exact_mv(30, 75.4, 8.2, decimals = 1)
-    exact_mv(30, c(50, 55), c(10, 10), r = 0.7, decimals = 1)
-    exact_mv(100, c(2.8, 2.6, 3), c(0.9, 0.85, 1),
-             matrix(c(1, 0.4, 0.3, 0.4, 1, 0.2, 0.3, 0.2, 1), 3))
-  })["elapsed"]
-  expect_lt(elapsed, 1)
+  expect_lt(exact_mv(30, 75.4, 8.2, decimals = 1)$tries, 50)
+  expect_lt(exact_mv(30, c(50, 55), c(10, 10), r = 0.7, decimals = 1)$tries,
+            200)
+  expect_lt(exact_mv(100, c(2.8, 2.6, 3), c(0.9, 0.85, 1),
+                     matrix(c(1, 0.4, 0.3, 0.4, 1, 0.2, 0.3, 0.2, 1), 3))$tries,
+            500)
 })

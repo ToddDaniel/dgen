@@ -54,11 +54,8 @@ dgen_results <- function(data) {
 #' @export
 print.dgen_results <- function(x, hint = FALSE, ...) {
   cat("\n", x$title, "\n\n", sep = "")
-  if (!is.null(x$table)) {
-    print(x$table)
-    cat("\n")
-  }
-  if (length(x$lines) > 0) cat(x$lines, sep = "\n")
+  if (!is.null(x$table)) print(x$table)
+  if (length(x$lines) > 0) cat("", x$lines, sep = "\n")
   if (length(x$note) > 0) cat("\n", x$note, "\n", sep = "")
   if (hint) cat("See this again with dgen_results(your_data).\n")
   invisible(x)

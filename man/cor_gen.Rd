@@ -2,70 +2,101 @@
 % Please edit documentation in R/cor_gen.R
 \name{cor_gen}
 \alias{cor_gen}
-\title{Generate Multiple Correlated Variables}
+\title{Generate correlated data with exact means, SDs and correlations}
 \usage{
 cor_gen(
   n,
   m,
   sd,
   r,
-  var_names = NULL,
   decimals = 2,
+  var_name = NULL,
   seed = NULL,
   export_csv = FALSE,
-  run_analysis = TRUE
+  show_results = TRUE
 )
 }
 \arguments{
-\item{n}{Sample size (positive integer)}
+\item{n}{Sample size: the number of rows.}
 
-\item{m}{Numeric vector of target means, one per variable}
+\item{m}{Target means, one for each variable, such as \code{c(50, 55)}.}
 
-\item{sd}{Numeric vector of target standard deviations, one per variable}
+\item{sd}{Target standard deviations, one for each variable.}
 
-\item{r}{Correlation structure. For two variables, a single numeric value.
-For three or more variables, a symmetric correlation matrix with 1s on the
-diagonal.}
+\item{r}{Target correlation between the two variables, such as \code{0.5}.
+For three or more variables, a correlation table (see Details).}
 
-\item{var_names}{Character vector of variable names. Defaults to
-\code{"Var1"}, \code{"Var2"}, etc.}
+\item{decimals}{Number of decimal places in the data. Use \code{0} for whole
+numbers.}
 
-\item{decimals}{Number of decimal places for rounding (default = 2)}
+\item{var_name}{Names for the variables, in quotes, such as
+\code{c("hours", "exam")}. The default is \code{"x"} and \code{"y"} (or \code{"x1"},
+\code{"x2"}, ... for three or more).}
 
-\item{seed}{Integer seed for reproducibility (default = NULL)}
+\item{seed}{A whole number that makes the data reproducible: the same
+seed gives the same data. Leave it out for different data each time.}
 
-\item{export_csv}{Either \code{FALSE} (default; nothing is written),
-\code{TRUE} (write a CSV with an auto-generated name to the current
-working directory), or a file path giving the CSV destination}
+\item{export_csv}{\code{FALSE} (the default) saves nothing. \code{TRUE} saves the
+data as a CSV file named after the function, in the working directory.
+A file name in quotes, such as \code{"exam.csv"}, saves to that file. An
+existing file is never replaced; a number is added to the new name.}
 
-\item{run_analysis}{Logical; run pairwise correlation tests? (default = TRUE)}
+\item{show_results}{\code{TRUE} (the default) prints a short summary: the
+targets beside what the data actually have, and the test of each
+correlation. \code{FALSE} prints nothing.}
 }
 \value{
-A list with:
-\item{data}{Data frame with generated variables}
-\item{targets}{Data frame of target means and SDs}
-\item{achieved}{Data frame of achieved means and SDs}
-\item{target_cors}{Target correlation matrix}
-\item{achieved_cors}{Achieved correlation matrix}
-\item{correlation_tests}{Pairwise test results (if \code{run_analysis = TRUE})}
-\item{assumptions}{Shapiro-Wilk normality tests (if \code{run_analysis = TRUE})}
+A data frame with \code{n} rows and one column per variable, returned
+invisibly. The summary is stored inside it; see it again with
+\code{\link[=dgen_results]{dgen_results()}}.
 }
 \description{
-Creates two or more correlated continuous variables with specified means,
-standard deviations, and correlation structure. Uses
-\code{MASS::mvrnorm()} with a Cholesky decomposition to achieve the
-specified population correlation matrix.
+Creates two variables whose means, standard deviations and correlation
+are exactly the values you ask for, in the rounded data your students
+will see. With a correlation table, it creates three or more variables.
+}
+\details{
+\strong{What "exact" means.} The mean and SD of each variable, rounded to
+\code{decimals + 1} places, equal \code{m} and \code{sd}, and each correlation, rounded
+to 2 decimal places, equals \code{r}.
+
+\strong{How it works.} Random bell-shaped values are transformed so that, in
+the sample itself, every variable has a mean of exactly 0 and an SD of
+exactly 1 and every pair is exactly uncorrelated. The correlations you
+asked for are then built in, the variables are rescaled to your means and
+SDs, and the data are rounded. A few values are moved by one unit to make
+each mean exact, and the draw is repeated until every SD and correlation
+of the rounded data matches as well.
+
+\strong{Limits.} The data are bell-shaped, with no minimum or maximum. Coarse
+rounding makes exact correlations harder: with whole numbers, small SDs
+and several variables, use more decimals or a larger \code{n}. When a request
+cannot be met, \code{cor_gen()} stops and says why; in rare cases that can
+take several seconds.
+
+\strong{Three or more variables.} Give \code{r} as a correlation table: a square
+matrix with 1s on the diagonal and the same values above and below it.
+This is also how to recreate a published study from its means, SDs and
+correlation table.
+
+\strong{Regression.} The data can be used for simple linear regression: the
+slope of the second variable on the first is \code{r} times the ratio of
+their SDs.
 }
 \examples{
-# Two correlated variables
-result <- cor_gen(n = 250, m = c(2.8, 2.6), sd = c(0.9, 0.85),
-                  r = 0.40, var_names = c("FP", "MD"))
+study <- cor_gen(n = 40, m = c(6.5, 78), sd = c(2.1, 9.5), r = 0.55,
+                 decimals = 1, var_name = c("hours", "exam"), seed = 1)
+cor(study$hours, study$exam)
 
-# Three variables with a correlation matrix
-cm <- matrix(c(1.0, 0.4, 0.3,
-               0.4, 1.0, 0.2,
-               0.3, 0.2, 1.0), nrow = 3, byrow = TRUE)
-result <- cor_gen(n = 250, m = c(2.8, 2.6, 3.0), sd = c(0.9, 0.85, 1.0),
-                  r = cm, var_names = c("FP", "MD", "Age"))
+# Simple regression on the same data
+coef(lm(exam ~ hours, data = study))
+
+# Three variables from a correlation table
+table <- matrix(c(1.00, 0.40, 0.30,
+                  0.40, 1.00, 0.20,
+                  0.30, 0.20, 1.00), nrow = 3)
+survey <- cor_gen(n = 100, m = c(2.8, 2.6, 3.0), sd = c(0.9, 0.85, 1.0),
+                  r = table, var_name = c("pay", "hours", "morale"),
+                  seed = 2)
 
 }

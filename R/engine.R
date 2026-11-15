@@ -99,8 +99,9 @@ hits_targets <- function(rounded, sd_units, target_r, r_digits) {
 
 # One exact variable per group, generated separately, for t tests and ANOVA.
 # `n` is one size for every group or one size per group. Returns a list with
-# one vector of values per group.
-exact_groups <- function(n, m, sd, decimals = 2) {
+# one vector of values per group. `part` is what a group is called in
+# messages ("Group 2: ...").
+exact_groups <- function(n, m, sd, decimals = 2, part = "Group") {
 
   # 1. One mean and one SD per group
   n_groups <- length(m)
@@ -120,7 +121,7 @@ exact_groups <- function(n, m, sd, decimals = 2) {
     tryCatch(
       exact_mv(n[group], m[group], sd[group], decimals = decimals)$data[, 1],
       error = function(problem) {
-        stop(if (n_groups > 1) paste0("Group ", group, ": "),
+        stop(if (n_groups > 1) paste0(part, " ", group, ": "),
              conditionMessage(problem), call. = FALSE)
       }
     )

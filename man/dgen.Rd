@@ -38,7 +38,8 @@ A file name in quotes, such as \code{"exam.csv"}, saves to that file. An
 existing file is never replaced; a number is added to the new name.}
 
 \item{show_results}{\code{TRUE} (the default) prints a short summary: the
-targets beside what the data actually have. \code{FALSE} prints nothing.}
+targets beside what the data actually have, and the smallest and
+largest value. \code{FALSE} prints nothing.}
 }
 \value{
 A data frame with \code{n} rows and one column per variable, returned

@@ -54,5 +54,5 @@ params2 <- f_to_means(eta_squared = 0.059, k = 3, sd = 10, grand_mean = 50)
 
 }
 \seealso{
-\code{\link[=anova_gen]{anova_gen()}}, \code{\link[=d_to_means]{d_to_means()}}
+\code{\link[=anova_gen]{anova_gen()}}
 }

@@ -1,29 +1,22 @@
 Package: dgen
 Type: Package
-Title: Data Generator for Statistical Teaching and Testing
-Version: 0.1.0
-Authors@R: c(
+Title: Classroom Datasets with Exact Summary Statistics
+Version: 0.9.0.9000
+Authors@R:
     person("Todd", "Daniel", email = "ToddDaniel@missouristate.edu",
-           role = c("aut", "cre")),
-    person("Brendan", "Morse", role = "ctb",
-           comment = "Author of the original MorseGen functions (stat.gen, cor.gen), 1982-2018, on which this package's design is based")
-    )
-Description: Generates datasets with exact statistical properties—means,
-    standard deviations, and correlations—for teaching statistics and
-    validating analytical workflows. Uses iterative refinement to achieve
-    specified parameters rather than approximations. Supports t-tests
-    (one-sample, independent, paired), ANOVA (one-way, two-way, blocked),
-    chi-square tests (goodness-of-fit, independence), proportion tests
-    (one-sample, two-sample, and paired via McNemar's test), linear and
-    logistic regression, and psychometric scales. Each function generates
-    data and automatically runs the corresponding analysis, returning
-    results alongside effect sizes and assumption checks. Helper functions
-    convert target effect sizes (Cohen's d, f, and h) into the means and
-    proportions the generators need.
+           role = c("aut", "cre"))
+Description: Generates datasets whose summary statistics match the targets
+    you choose. Means, standard deviations, correlations and counts hold
+    exactly in the rounded data students receive. Functions are named for
+    the test being taught: one-sample, independent-samples and paired t
+    tests, one-way ANOVA, correlation, multiple regression, one- and
+    two-sample proportion tests, and chi-square tests. Each can also run the
+    matching test, so instructors can check the result before assigning the
+    data. Inspired by MorseGen (Morse, 2012)
+    <https://vc.bridgew.edu/fac_articles/1>.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Depends: R (>= 4.0.0)
-Imports: MASS
 Suggests:
     testthat (>= 3.0.0)
 Roxygen: list(markdown = TRUE)

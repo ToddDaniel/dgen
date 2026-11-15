@@ -62,8 +62,9 @@ print.dgen_results <- function(x, hint = FALSE, ...) {
 }
 
 # Targets beside the values the data actually have, shown at the precision
-# of the promise (decimals + 1). `columns` is a list with one vector of
-# values per row of the table.
+# of the promise (decimals + 1), then the smallest and largest value (there
+# are no bounds, so this is where an out-of-range value shows). `columns` is
+# a list with one vector of values per row of the table.
 compare_table <- function(labels, columns, target_mean, target_sd, decimals) {
   shown <- function(x) show_number(x, decimals + 1)
   data.frame(
@@ -72,6 +73,8 @@ compare_table <- function(labels, columns, target_mean, target_sd, decimals) {
     "Mean (data)"   = shown(vapply(columns, mean, numeric(1))),
     "SD (target)"   = shown(target_sd),
     "SD (data)"     = shown(vapply(columns, stats::sd, numeric(1))),
+    "Smallest"      = show_number(vapply(columns, min, numeric(1)), decimals),
+    "Largest"       = show_number(vapply(columns, max, numeric(1)), decimals),
     row.names = labels, check.names = FALSE
   )
 }

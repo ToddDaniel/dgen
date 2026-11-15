@@ -37,5 +37,5 @@ params$p2
 
 }
 \seealso{
-\code{\link[=twoprop_gen]{twoprop_gen()}}, \code{\link[=oneprop_gen]{oneprop_gen()}}, \code{\link[=d_to_means]{d_to_means()}}
+\code{\link[=twoprop_gen]{twoprop_gen()}}, \code{\link[=oneprop_gen]{oneprop_gen()}}
 }

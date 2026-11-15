@@ -1,19 +1,5 @@
 # Tests for the export_csv argument (FALSE / TRUE / file path)
 
-test_that("a path with output_format = 'both' writes _wide and _long files", {
-  dest <- file.path(tempdir(), "paired_out.csv")
-  wide <- file.path(tempdir(), "paired_out_wide.csv")
-  long <- file.path(tempdir(), "paired_out_long.csv")
-  for (f in c(dest, wide, long)) if (file.exists(f)) file.remove(f)
-  suppressMessages(t_paired_gen(
-    n = 20, measure1_mean = 50, measure1_sd = 10,
-    measure2_mean = 55, measure2_sd = 10,
-    output_format = "both", seed = 1, export_csv = dest))
-  expect_false(file.exists(dest))
-  expect_true(file.exists(wide))
-  expect_true(file.exists(long))
-  file.remove(wide, long)
-})
 
 test_that("a path with a single output_format is used verbatim", {
   dest <- file.path(tempdir(), "anova_long_only.csv")

@@ -11,7 +11,8 @@ tie_margin <- 1e-9
 
 # ---- 1. Is the request well formed? ---------------------------------------
 
-check_targets <- function(n, m, sd, r, decimals, r_digits) {
+check_targets <- function(n, m, sd, r, decimals, r_digits,
+                          derived_means = FALSE) {
 
   # 1. Sample size and rounding
   if (!is_whole(n) || length(n) != 1 || n < 1) {
@@ -41,7 +42,7 @@ check_targets <- function(n, m, sd, r, decimals, r_digits) {
   }
 
   # 3. Targets cannot be finer than the precision they are checked at
-  check_precision(m,  decimals + 1, decimals, "means")
+  if (!derived_means) check_precision(m, decimals + 1, decimals, "means")
   check_precision(sd, decimals + 1, decimals, "SDs")
 
   # 4. Correlations

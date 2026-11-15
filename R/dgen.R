@@ -46,7 +46,8 @@
 #'   A file name in quotes, such as `"exam.csv"`, saves to that file. An
 #'   existing file is never replaced; a number is added to the new name.
 #' @param show_results `TRUE` (the default) prints a short summary: the
-#'   targets beside what the data actually have. `FALSE` prints nothing.
+#'   targets beside what the data actually have, and the smallest and
+#'   largest value. `FALSE` prints nothing.
 #'
 #' @return A data frame with `n` rows and one column per variable, returned
 #'   invisibly (so the data do not fill the console). The summary is stored
@@ -90,14 +91,11 @@ dgen <- function(n, m, sd, decimals = 2, var_name = NULL, seed = NULL,
   data    <- data.frame(stats::setNames(columns, names), check.names = FALSE)
 
   # 3. Assemble the summary and hand everything back
-  table <- compare_table(names, columns, m, sd, decimals)
-  table$Smallest <- show_number(vapply(columns, min, numeric(1)), decimals)
-  table$Largest  <- show_number(vapply(columns, max, numeric(1)), decimals)
   results <- list(
     title = if (n_variables == 1) "One variable with an exact mean and SD"
             else paste(n_variables, "independent variables, each with an",
                        "exact mean and SD"),
-    table = table,
+    table = compare_table(names, columns, m, sd, decimals),
     lines = character(),
     note  = data_note(data, decimals)
   )

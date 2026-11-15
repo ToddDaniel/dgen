@@ -7,12 +7,20 @@ exactly, rather than approximating them.
 
 ## Origins
 
-This package builds on the design of MorseGen, originally written by
-Dr. Brendan Morse, a gifted statistics educator who taught at Bridgewater
-State University until his passing in 2018. His `stat.gen()` and
-`cor.gen()` functions, small, elegant tools for generating data that hit
-exact target parameters, are the foundation this package extends. This is
-offered in his memory.
+dgen began as a rescue. In 2012, Dr. Brendan Morse of Bridgewater State
+University published MorseGen, a small R package with two elegant functions:
+`stat.gen()`, which builds a variable with an exact mean and standard
+deviation, and `cor.gen()`, which builds two variables with an exact
+correlation. I found it so useful for creating classroom datasets that I kept
+coming back to it. After Dr. Morse's death in 2018 the package went
+unmaintained, and in 2022 CRAN archived it, so it can no longer be installed
+the usual way.
+
+dgen restores that idea and extends it. Its engine generalizes Morse's method
+to any number of variables with an exact correlation matrix, keeps every
+target exact in the rounded data students actually see, and wraps it in
+functions named for the tests instructors teach, from t tests and ANOVA to
+chi-square and regression. The code is new; the inspiration is his.
 
 ## Installation
 

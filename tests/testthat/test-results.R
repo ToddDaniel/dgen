@@ -48,6 +48,8 @@ test_that("compare_table() shows targets and data at decimals + 1", {
   expect_equal(table[["Mean (target)"]], c("72.0", "78.0"))
   expect_equal(table[["Mean (data)"]], c("72.0", "78.0"))
   expect_equal(table[["SD (data)"]], c("2.0", "3.0"))
+  expect_equal(table[["Smallest"]], c("70", "75"))
+  expect_equal(table[["Largest"]], c("74", "81"))
 })
 
 test_that("dgen_results() explains itself when nothing is stored", {

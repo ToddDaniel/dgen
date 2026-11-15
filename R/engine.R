@@ -8,15 +8,21 @@
 # n rows of k variables (k = length(m)). `r` is one correlation for two
 # variables or a k x k correlation table. Returns the data as a matrix and
 # the number of tries it took.
+# `also_check` is an extra promise a generator may add: a function that is
+# given the finished data and says TRUE or FALSE (for example, "Cohen's d
+# reports as 0.50"). `derived_means = TRUE` is for a mean worked out from an
+# effect size rather than typed in, which may have more decimals.
 # The try limit is a fixed amount of work, so giving up takes about 3
 # seconds whatever the size of the request: about 73,000 tries for 15 rows of
 # 3 variables, 13,000 for 500 rows of 5. Small samples are quick to try and
 # are the ones that can need many tries.
 exact_mv <- function(n, m, sd, r = NULL, decimals = 2, r_digits = 2,
-                     max_iter = round(4e7 / (500 + n * length(m)), -3)) {
+                     max_iter = round(4e7 / (500 + n * length(m)), -3),
+                     also_check = NULL, derived_means = FALSE) {
 
   # 1. Check inputs, then check that the targets can be reached at all
-  target_r     <- check_targets(n, m, sd, r, decimals, r_digits)
+  target_r     <- check_targets(n, m, sd, r, decimals, r_digits,
+                                derived_means)
   target_total <- check_feasible(n, m, sd, decimals)
 
   # 2. Work in rounding units, so every rounded value is a whole number
@@ -49,8 +55,10 @@ exact_mv <- function(n, m, sd, r = NULL, decimals = 2, r_digits = 2,
     }
 
     if (hits_targets(rounded, sd_units, target_r, r_digits)) {
-      return(list(data  = round(rounded / units_per_one, decimals),
-                  tries = tries))
+      data <- round(rounded / units_per_one, decimals)
+      if (is.null(also_check) || also_check(data)) {
+        return(list(data = data, tries = tries))
+      }
     }
   }
 
@@ -100,8 +108,11 @@ hits_targets <- function(rounded, sd_units, target_r, r_digits) {
 # One exact variable per group, generated separately, for t tests and ANOVA.
 # `n` is one size for every group or one size per group. Returns a list with
 # one vector of values per group. `part` is what a group is called in
-# messages ("Group 2: ...").
-exact_groups <- function(n, m, sd, decimals = 2, part = "Group") {
+# messages ("Group 2: ..."). `also_check` is an extra promise about all the
+# groups together: it is given the list of groups, and the last group is
+# redrawn until it holds.
+exact_groups <- function(n, m, sd, decimals = 2, part = "Group",
+                         also_check = NULL, derived_means = FALSE) {
 
   # 1. One mean and one SD per group
   n_groups <- length(m)
@@ -117,15 +128,23 @@ exact_groups <- function(n, m, sd, decimals = 2, part = "Group") {
 
   # 2. Each group is its own one-variable problem; a message from the engine
   #    is passed on with the group it belongs to
-  lapply(seq_len(n_groups), function(group) {
-    tryCatch(
-      exact_mv(n[group], m[group], sd[group], decimals = decimals)$data[, 1],
+  groups <- list()
+  for (group in seq_len(n_groups)) {
+    finished <- groups
+    check_with_others <- if (group == n_groups && !is.null(also_check)) {
+      function(data) also_check(c(finished, list(data[, 1])))
+    }
+    groups[[group]] <- tryCatch(
+      exact_mv(n[group], m[group], sd[group], decimals = decimals,
+               also_check = check_with_others,
+               derived_means = derived_means)$data[, 1],
       error = function(problem) {
         stop(if (n_groups > 1) paste0(part, " ", group, ": "),
              conditionMessage(problem), call. = FALSE)
       }
     )
-  })
+  }
+  groups
 }
 
 # ---- Categories ---------------------------------------------------------------

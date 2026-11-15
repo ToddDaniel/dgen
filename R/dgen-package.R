@@ -20,9 +20,9 @@
 #'
 #' @section T-test family:
 #' \describe{
-#'   \item{\code{\link{t_onesample_gen}}}{One-sample t-test data}
-#'   \item{\code{\link{t_indep_gen}}}{Independent samples t-test data}
-#'   \item{\code{\link{t_paired_gen}}}{Paired samples t-test data}
+#'   \item{\code{\link{t_one_gen}}}{One-sample t test}
+#'   \item{\code{\link{t_indep_gen}}}{Independent-samples t test}
+#'   \item{\code{\link{t_paired_gen}}}{Paired t test}
 #' }
 #'
 #' @section ANOVA family:
@@ -49,10 +49,6 @@
 #'
 #' @section Effect-size helpers:
 #' \describe{
-#'   \item{\code{\link{d_to_means}}}{Cohen's d to target means for
-#'     independent groups}
-#'   \item{\code{\link{d_to_means_paired}}}{Paired Cohen's d to target means
-#'     for repeated measures}
 #'   \item{\code{\link{f_to_means}}}{Cohen's f (or eta-squared) to target
 #'     group means for ANOVA}
 #'   \item{\code{\link{h_to_prop}}}{Cohen's h to a second target proportion}

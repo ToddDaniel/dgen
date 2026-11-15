@@ -58,7 +58,7 @@ test_that("two variables are exact: n >= 10, SD >= 3 rounding units", {
   }
 })
 
-test_that("three variables are exact: n >= 30, SD >= 5 rounding units", {
+test_that("three variables are exact: n >= 15, SD >= 3.5 rounding units", {
   r <- matrix(c(1, 0.4, 0.3,
                 0.4, 1, 0.2,
                 0.3, 0.2, 1), 3)
@@ -80,6 +80,30 @@ test_that("three variables are exact: n >= 30, SD >= 5 rounding units", {
     out <- exact_mv(30, m = c(50, 60, 70), sd = c(5, 5, 5), r = r_half,
                     decimals = 0)
     expect_exact(out$data, c(50, 60, 70), c(5, 5, 5), r_half, decimals = 0)
+  }
+})
+
+test_that("three whole-number variables at small n: mixed and small SDs", {
+  skip_on_cran()
+  # The hardest corner of the must-succeed zone. Each case needed more than
+  # 10,000 tries for some seeds, which is why small samples get a high limit.
+  r_mixed <- matrix(c(1, -0.12, 0.51,
+                      -0.12, 1, 0.48,
+                      0.51, 0.48, 1), 3)
+  r_half <- matrix(0.5, 3, 3)
+  diag(r_half) <- 1
+  cases <- list(
+    list(n = 15, m = c(12.4, 61.3, 9.8), sd = c(3.8, 19.1, 3.5), r = r_mixed),
+    list(n = 15, m = c(12, 14, 16),      sd = c(3.5, 3.5, 3.5),  r = r_half),
+    list(n = 15, m = c(20, 60, 30),      sd = c(4, 12, 5),       r = r_mixed),
+    list(n = 20, m = c(12.2, 14.6, 16),  sd = c(4, 4.4, 5.1),    r = r_mixed)
+  )
+  for (case in cases) {
+    for (seed in 1:15) {
+      set.seed(seed)
+      out <- exact_mv(case$n, case$m, case$sd, case$r, decimals = 0)
+      expect_exact(out$data, case$m, case$sd, case$r, decimals = 0)
+    }
   }
 })
 
@@ -128,6 +152,10 @@ test_that("impossible means and SDs stop at once, naming the nearest", {
   expect_error(exact_mv(10, 50.3, 1, decimals = 0),
                "and a mean of 50.3, the SD cannot be 1.0. The closest SDs you can get are 0.9 and 1.1",
                fixed = TRUE)
+  # n = 4: the right odd/even sum of squares exists but cannot be made
+  expect_error(exact_mv(4, 3.5, 1.5, decimals = 0),
+               "the SD cannot be 1.5. The closest SDs you can get are 1.3 and 1.7",
+               fixed = TRUE)
   expect_error(exact_mv(7, 2.45, 1.2, decimals = 1),
                "With 7 values rounded to 1 decimal place, the mean cannot be 2.45",
                fixed = TRUE)
@@ -143,6 +171,24 @@ test_that("the nearest SDs named in the message really are reachable", {
   expect_equal(c(sum(low), sum(high)), c(503, 503))
   expect_equal(nearest_sds(10, 503, 1), c(stats::sd(low), stats::sd(high)))
   expect_null(nearest_sds(10, 503, 2))
+})
+
+test_that("for n = 3 and 4 the SD check agrees with trying every dataset", {
+  for (n in 3:4) {
+    every <- as.matrix(expand.grid(rep(list(0:12), n)))
+    means <- rowMeans(every)
+    sds   <- sqrt(rowSums((every - means)^2) / (n - 1))
+    for (m in c(5.5, 6, 6.3, 6.5)) {
+      total_mean <- round(n * m) / n
+      if (abs(total_mean - m) >= 0.05 - 1e-9) next
+      for (sd in seq(0.5, 2.2, by = 0.1)) {
+        exists <- any(abs(means - total_mean) < 1e-9 &
+                        abs(sds - sd) < 0.05 - 1e-9)
+        allowed <- is.null(nearest_sds(n, round(n * m), sd))
+        expect_identical(allowed, exists, info = paste(n, m, sd))
+      }
+    }
+  }
 })
 
 test_that("badly formed requests get plain-language messages", {
@@ -180,7 +226,7 @@ test_that("extreme corners give up with advice instead of spinning", {
   set.seed(1)
   started <- Sys.time()
   expect_error(exact_mv(30, rep(3, 5), rep(1, 5), r, decimals = 0),
-               "could not find data matching every target after 10,000 tries")
+               "could not find data matching every target after 62,000 tries")
   expect_lt(as.numeric(Sys.time() - started, units = "secs"), 5)
 })
 

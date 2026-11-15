@@ -184,6 +184,8 @@ nearest_means <- function(n, mean_units) {
 # sum(y^2) is a whole number that is odd when `remainder` is odd and even
 # when it is even, and it can never be smaller than `remainder`. So the
 # reachable SDs come from sum(y^2) = remainder, remainder + 2, ...
+# With fewer than 5 values some of those sums cannot be made either, so for
+# n = 3 or 4 the reachable sums are listed outright (small_n_sums()).
 nearest_sds <- function(n, total, sd_units) {
   remainder <- total %% n
   offset    <- remainder^2 / n
@@ -193,6 +195,17 @@ nearest_sds <- function(n, total, sd_units) {
   lowest  <- (n - 1) * max(sd_units - half_step, 0)^2 + offset
   highest <- (n - 1) * (sd_units + half_step)^2 + offset
 
+  if (n < 5 && sd_units <= 20) {
+    reachable <- small_n_sums(n, remainder,
+                              largest = (n - 1) * (sd_units + 1)^2 + offset)
+    if (any(reachable > lowest + tie_margin &
+            reachable < highest - tie_margin)) return(NULL)
+    below <- reachable[reachable <= lowest + tie_margin]
+    above <- reachable[reachable >= highest - tie_margin]
+    return(sd_from(c(if (length(below)) max(below),
+                     if (length(above)) min(above))))
+  }
+
   same_parity_up <- function(x) x + (x - remainder) %% 2
   first_inside   <- max(same_parity_up(floor(lowest + tie_margin) + 1),
                         remainder)
@@ -200,6 +213,17 @@ nearest_sds <- function(n, total, sd_units) {
 
   below <- first_inside - 2
   c(if (below >= remainder) sd_from(below), sd_from(first_inside))
+}
+
+# Every value of sum(y^2) that n whole numbers adding to `remainder` can
+# have, up to `largest`, found by trying all combinations. No y can be
+# larger than sqrt(largest), which keeps the list short for n = 3 or 4.
+small_n_sums <- function(n, remainder, largest) {
+  reach      <- ceiling(sqrt(largest))
+  free       <- as.matrix(expand.grid(rep(list(-reach:reach), n - 1)))
+  last_value <- remainder - rowSums(free)
+  sums       <- rowSums(free^2) + last_value^2
+  sort(unique(sums[sums <= largest]))
 }
 
 # ---- 3. Small helpers ------------------------------------------------------

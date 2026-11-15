@@ -105,6 +105,11 @@ Useful links:
 \author{
 \strong{Maintainer}: Todd Daniel \email{ToddDaniel@missouristate.edu}
 
+Authors:
+\itemize{
+  \item Todd Daniel \email{ToddDaniel@missouristate.edu}
+}
+
 Other contributors:
 \itemize{
   \item Brendan Morse (Author of the original MorseGen functions (stat.gen, cor.gen), 1982-2018, on which this package's design is based) [contributor]

@@ -69,7 +69,8 @@ than 1.
 predictors, the way articles lay out correlation tables.
 
 \strong{What is exact.} The mean and SD of every variable, rounded to
-\code{decimals + 1} places, equal \code{m} and \code{sd}. Each predictor's correlation
+\code{decimals + 1} places, equal \code{m} and \code{sd}. SDs are sample SDs (\code{n - 1}
+in the denominator; Excel's \code{STDEV.S}). Each predictor's correlation
 with the outcome, rounded to 2 decimal places, equals \code{r}, and the
 correlations among the predictors round to 0.00. The slopes, their
 standard errors and tests, the standardized betas, F, R squared and

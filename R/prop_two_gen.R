@@ -48,7 +48,7 @@
 #'
 #' @examples
 #' # Did a larger share of the new-layout visitors buy something?
-#' visits <- prop_two_gen(n1 = 120, n2 = 150, prop = c(0.25, 0.36),
+#' visits <- prop_two_gen(n1 = 120, n2 = 150, prop = c(0.25, 0.42),
 #'                        labels = c("Old layout", "New layout"),
 #'                        var_name = "bought", seed = 1)
 #' table(visits$group, visits$bought)

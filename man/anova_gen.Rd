@@ -64,7 +64,8 @@ standard deviation you choose, and runs the one-way analysis of variance.
 }
 \details{
 \strong{What is exact.} The mean and SD of each group, rounded to
-\code{decimals + 1} places, equal \code{m} and \code{sd}. The sums of squares, F, the
+\code{decimals + 1} places, equal \code{m} and \code{sd}. SDs are sample SDs (\code{n - 1}
+in the denominator; Excel's \code{STDEV.S}). The sums of squares, F, the
 p-value and the effect sizes are calculated from the data and shown in
 the summary; they are not targets.
 

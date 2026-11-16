@@ -24,7 +24,8 @@
 #' predictors, the way articles lay out correlation tables.
 #'
 #' **What is exact.** The mean and SD of every variable, rounded to
-#' `decimals + 1` places, equal `m` and `sd`. Each predictor's correlation
+#' `decimals + 1` places, equal `m` and `sd`. SDs are sample SDs (`n - 1`
+#' in the denominator; Excel's `STDEV.S`). Each predictor's correlation
 #' with the outcome, rounded to 2 decimal places, equals `r`, and the
 #' correlations among the predictors round to 0.00. The slopes, their
 #' standard errors and tests, the standardized betas, F, R squared and

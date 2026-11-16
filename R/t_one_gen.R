@@ -10,7 +10,8 @@
 #'
 #' @details
 #' **What is exact.** The mean and SD of the returned data, rounded to
-#' `decimals + 1` places, equal `m` and `sd`. If you give `d` instead of
+#' `decimals + 1` places, equal `m` and `sd`. SDs are sample SDs (`n - 1`
+#' in the denominator; Excel's `STDEV.S`). If you give `d` instead of
 #' `m`, Cohen's d of the returned data, rounded to 2 decimal places, equals
 #' `d`. The t statistic, p-value and confidence interval are calculated from
 #' the data and shown in the summary; they are not targets.

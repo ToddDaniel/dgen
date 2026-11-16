@@ -62,7 +62,9 @@ summary; they are not targets.
 z = (p - \code{test_value}) / sqrt(\code{test_value} * (1 - \code{test_value}) / n),
 with no continuity correction, so it matches a hand calculation. The
 confidence interval is the usual one, p plus or minus 1.96 standard
-errors. If an expected count is below 5 the summary adds a note.
+errors. If an expected count is below 5 the summary adds a note. The
+summary also gives the p-value of the exact binomial test, which is what
+JASP reports by default.
 
 \strong{Effect size.} Cohen's h compares the sample proportion with the test
 value on a scale where 0.2 is small, 0.5 medium and 0.8 large.

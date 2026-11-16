@@ -61,7 +61,8 @@ difference.
 \details{
 \strong{What is exact.} The mean and SD of each measurement, rounded to
 \code{decimals + 1} places, equal \code{m} and \code{sd}, and their correlation, rounded
-to 2 decimal places, equals \code{r}. Because both means are exact, so is the
+to 2 decimal places, equals \code{r}. SDs are sample SDs (\code{n - 1} in the
+denominator; Excel's \code{STDEV.S}). Because both means are exact, so is the
 mean difference. If you give \code{d}, Cohen's d of the returned data, rounded
 to 2 decimal places, equals \code{d}. The SD of the differences, the t
 statistic, the p-value and the confidence interval are calculated from

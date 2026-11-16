@@ -20,7 +20,9 @@
 #' z = (p - `test_value`) / sqrt(`test_value` * (1 - `test_value`) / n),
 #' with no continuity correction, so it matches a hand calculation. The
 #' confidence interval is the usual one, p plus or minus 1.96 standard
-#' errors. If an expected count is below 5 the summary adds a note.
+#' errors. If an expected count is below 5 the summary adds a note. The
+#' summary also gives the p-value of the exact binomial test, which is what
+#' JASP reports by default.
 #'
 #' **Effect size.** Cohen's h compares the sample proportion with the test
 #' value on a scale where 0.2 is small, 0.5 medium and 0.8 large.
@@ -92,6 +94,8 @@ prop_one_gen <- function(n, prop, test_value, labels = NULL, var_name = NULL,
     ),
     lines = c(rounding_lines(n, prop, count, categories[1]),
               z_line(z),
+              paste0("Exact binomial test (JASP's default): p ",
+                     p_text(stats::binom.test(count, n, test_value)$p.value)),
               paste0("95% CI for the proportion: ",
                      show_number(proportion - margin, 3), " to ",
                      show_number(proportion + margin, 3)),

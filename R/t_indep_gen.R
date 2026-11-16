@@ -9,7 +9,8 @@
 #'
 #' @details
 #' **What is exact.** The mean and SD of each group, rounded to
-#' `decimals + 1` places, equal `m` and `sd`. If you give `d`, Cohen's d of
+#' `decimals + 1` places, equal `m` and `sd`. SDs are sample SDs (`n - 1`
+#' in the denominator; Excel's `STDEV.S`). If you give `d`, Cohen's d of
 #' the returned data, rounded to 2 decimal places, equals `d`. The t
 #' statistics, p-values and confidence interval are calculated from the data
 #' and shown in the summary; they are not targets.

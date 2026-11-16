@@ -9,7 +9,8 @@
 #'
 #' @details
 #' **What is exact.** The mean and SD of each group, rounded to
-#' `decimals + 1` places, equal `m` and `sd`. The sums of squares, F, the
+#' `decimals + 1` places, equal `m` and `sd`. SDs are sample SDs (`n - 1`
+#' in the denominator; Excel's `STDEV.S`). The sums of squares, F, the
 #' p-value and the effect sizes are calculated from the data and shown in
 #' the summary; they are not targets.
 #'

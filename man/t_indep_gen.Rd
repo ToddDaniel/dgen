@@ -71,7 +71,8 @@ deviation you choose, and tests the difference between their means.
 }
 \details{
 \strong{What is exact.} The mean and SD of each group, rounded to
-\code{decimals + 1} places, equal \code{m} and \code{sd}. If you give \code{d}, Cohen's d of
+\code{decimals + 1} places, equal \code{m} and \code{sd}. SDs are sample SDs (\code{n - 1}
+in the denominator; Excel's \code{STDEV.S}). If you give \code{d}, Cohen's d of
 the returned data, rounded to 2 decimal places, equals \code{d}. The t
 statistics, p-values and confidence interval are calculated from the data
 and shown in the summary; they are not targets.

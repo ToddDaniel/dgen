@@ -34,6 +34,14 @@ test_that("prop_one_gen: the summary is the textbook z test", {
                         shown, fixed = TRUE)))
   expect_true(any(grepl("95% CI for the proportion: 0.600 to 0.800", shown,
                         fixed = TRUE)))
+  # the exact binomial p-value, for JASP users
+  expect_true(any(grepl("Exact binomial test (JASP's default): p < .001",
+                        shown, fixed = TRUE)))
+  middling <- dgen_results(prop_one_gen(40, 0.6, 0.5, seed = 1,
+                                        show_results = FALSE))
+  expect_true(paste0("Exact binomial test (JASP's default): p ",
+                     p_text(stats::binom.test(24, 40, 0.5)$p.value)) %in%
+                middling$lines)
   expect_true(any(grepl("Cohen's h = 0.41", shown, fixed = TRUE)))
   expect_false(any(grepl("Note:", shown)))
 

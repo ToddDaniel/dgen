@@ -11,7 +11,8 @@
 #' @details
 #' **What "exact" means.** The mean and SD of each variable, rounded to
 #' `decimals + 1` places, equal `m` and `sd`, and each correlation, rounded
-#' to 2 decimal places, equals `r`.
+#' to 2 decimal places, equals `r`. SDs are sample SDs (`n - 1` in the
+#' denominator; Excel's `STDEV.S`).
 #'
 #' **How it works.** Random bell-shaped values are transformed so that, in
 #' the sample itself, every variable has a mean of exactly 0 and an SD of

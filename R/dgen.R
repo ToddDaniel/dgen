@@ -11,7 +11,8 @@
 #' **What "exact" means.** The mean and SD of the returned data, rounded to
 #' `decimals + 1` places, equal `m` and `sd`. With `decimals = 1`, a target
 #' mean of 75.4 gives data whose mean is reported as 75.40. A student who
-#' computes the mean and SD from the data gets your numbers.
+#' computes the mean and SD from the data gets your numbers. SDs are sample
+#' SDs (`n - 1` in the denominator; Excel's `STDEV.S`).
 #'
 #' **How it works.** Random bell-shaped values are standardized (so their
 #' mean is exactly 0 and their SD exactly 1), rescaled to your mean and SD,

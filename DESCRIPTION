@@ -1,7 +1,7 @@
 Package: dgen
 Type: Package
 Title: Classroom Datasets with Exact Summary Statistics
-Version: 0.9.0.9000
+Version: 1.0.0
 Authors@R:
     person("Todd", "Daniel", email = "ToddDaniel@missouristate.edu",
            role = c("aut", "cre"))
@@ -18,7 +18,10 @@ License: MIT + file LICENSE
 Encoding: UTF-8
 Depends: R (>= 4.0.0)
 Suggests:
+    knitr,
+    rmarkdown,
     testthat (>= 3.0.0)
+VignetteBuilder: knitr
 Roxygen: list(markdown = TRUE)
 URL: https://github.com/ToddDaniel/dgen
 BugReports: https://github.com/ToddDaniel/dgen/issues

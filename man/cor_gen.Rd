@@ -58,7 +58,8 @@ will see. With a correlation table, it creates three or more variables.
 \details{
 \strong{What "exact" means.} The mean and SD of each variable, rounded to
 \code{decimals + 1} places, equal \code{m} and \code{sd}, and each correlation, rounded
-to 2 decimal places, equals \code{r}.
+to 2 decimal places, equals \code{r}. SDs are sample SDs (\code{n - 1} in the
+denominator; Excel's \code{STDEV.S}).
 
 \strong{How it works.} Random bell-shaped values are transformed so that, in
 the sample itself, every variable has a mean of exactly 0 and an SD of

@@ -1,0 +1,14 @@
+year <- sub("-.*", "", if (is.null(meta$Date)) meta$Packaged else meta$Date)
+if (length(year) == 0 || is.na(year) || !nzchar(year)) {
+  year <- format(Sys.Date(), "%Y")
+}
+
+bibentry(
+  bibtype = "Manual",
+  title   = "dgen: Classroom Datasets with Exact Summary Statistics",
+  author  = person("Todd", "Daniel"),
+  year    = year,
+  note    = paste("R package version", meta$Version),
+  url     = "https://github.com/ToddDaniel/dgen",
+  header  = "To cite dgen in publications, please use:"
+)

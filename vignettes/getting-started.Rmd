@@ -296,4 +296,4 @@ variables with an exact correlation.
 
 Morse, B. J. (2012). *MorseGen: Simple raw data generator based on
 user-specified summary statistics* (R package version 1.2).
-<https://vc.bridgew.edu/fac_articles/1>
+<https://vc.bridgew.edu/fac_articles/1/>

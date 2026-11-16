@@ -44,7 +44,7 @@
 #' @references
 #' Morse, B. J. (2012). \emph{MorseGen: Simple raw data generator based on
 #' user-specified summary statistics} (R package version 1.2).
-#' \url{https://vc.bridgew.edu/fac_articles/1}
+#' \url{https://vc.bridgew.edu/fac_articles/1/}
 #'
 #' @keywords internal
 "_PACKAGE"

@@ -13,7 +13,7 @@ Description: Generates datasets whose summary statistics match the targets
     two-sample proportion tests, and chi-square tests. Each can also run the
     matching test, so instructors can check the result before assigning the
     data. Inspired by MorseGen (Morse, 2012)
-    <https://vc.bridgew.edu/fac_articles/1>.
+    <https://vc.bridgew.edu/fac_articles/1/>.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Depends: R (>= 4.0.0)

@@ -10,8 +10,8 @@ t_indep_gen(
   m,
   sd,
   d = NULL,
-  labels = c("Group 1", "Group 2"),
-  var_name = "x",
+  labels = NULL,
+  var_name = NULL,
   layout = "long",
   decimals = 2,
   seed = NULL,
@@ -32,7 +32,8 @@ as \code{n1} unless you say otherwise.}
 \item{d}{Target Cohen's d, to 2 decimal places, as another way of setting
 the second group's mean.}
 
-\item{labels}{Names of the two groups, in quotes.}
+\item{labels}{Names of the two groups, in quotes. The default is
+\code{"Group 1"} and \code{"Group 2"}.}
 
 \item{var_name}{Name for the measured variable, in quotes. The default is
 \code{"x"}. Not used in wide layout, where the columns are named by \code{labels}.}

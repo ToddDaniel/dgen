@@ -9,7 +9,7 @@ anova_gen(
   m,
   sd,
   labels = NULL,
-  var_name = "x",
+  var_name = NULL,
   layout = "long",
   decimals = 2,
   seed = NULL,

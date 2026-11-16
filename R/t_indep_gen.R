@@ -38,7 +38,8 @@
 #'   `c(9, 10)`.
 #' @param d Target Cohen's d, to 2 decimal places, as another way of setting
 #'   the second group's mean.
-#' @param labels Names of the two groups, in quotes.
+#' @param labels Names of the two groups, in quotes. The default is
+#'   `"Group 1"` and `"Group 2"`.
 #' @param var_name Name for the measured variable, in quotes. The default is
 #'   `"x"`. Not used in wide layout, where the columns are named by `labels`.
 #' @param layout `"long"` (the default) gives one row per observation, with
@@ -74,8 +75,7 @@
 #'
 #' @export
 t_indep_gen <- function(n1, n2 = n1, m, sd, d = NULL,
-                        labels = c("Group 1", "Group 2"), var_name = "x",
-                        layout = "long", decimals = 2, seed = NULL,
+                        labels = NULL, var_name = NULL, layout = "long", decimals = 2, seed = NULL,
                         export_csv = FALSE, show_results = TRUE) {
 
   # 1. Check inputs; with d, work out the second mean it stands for
@@ -87,8 +87,9 @@ t_indep_gen <- function(n1, n2 = n1, m, sd, d = NULL,
   need_numbers(n2, 1, "n2", "25")
   need_numbers(sd, 2, "sd", "c(9, 10)")
   check_d(d)
-  labels <- variable_names(labels, 2, NULL, "labels", "groups")
-  name   <- variable_names(var_name, 1, "x")
+  group_names <- variable_names(labels, 2, c("Group 1", "Group 2"),
+                                "labels", "groups")
+  name <- variable_names(var_name, 1, "x")
   use_seed(seed)
   if (is.null(d)) {
     need_numbers(m, 2, "m", "c(72, 78)")
@@ -110,15 +111,17 @@ t_indep_gen <- function(n1, n2 = n1, m, sd, d = NULL,
     c(n1, n2), m, sd, decimals, derived_means = !is.null(d),
     also_check = if (!is.null(d)) function(groups) reports_as(cohens_d(groups), d)
   )
-  data <- arrange_groups(groups, labels, name, layout)
+  data <- arrange_groups(groups, group_names, name, layout)
 
   # 3. Run the tests, assemble the summary and hand everything back
   pooled <- stats::t.test(groups[[2]], groups[[1]], var.equal = TRUE)
   welch  <- stats::t.test(groups[[2]], groups[[1]])
   results <- list(
-    title = paste0("Independent-samples t test: ", name, " by group"),
-    table = compare_table(labels, groups, m, sd, decimals),
-    lines = c(paste0("Difference in means (", labels[2], " - ", labels[1],
+    title = group_title("Independent-samples t test", var_name, labels,
+                        group_names, layout),
+    table = compare_table(group_names, groups, m, sd, decimals),
+    lines = c(paste0("Difference in means (", group_names[2], " - ",
+                     group_names[1],
                      ") = ",
                      show_number(mean(groups[[2]]) - mean(groups[[1]]),
                                  decimals + 1)),

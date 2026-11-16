@@ -10,7 +10,7 @@ t_paired_gen(
   sd,
   r,
   d = NULL,
-  var_name = c("time1", "time2"),
+  var_name = NULL,
   decimals = 2,
   seed = NULL,
   export_csv = FALSE,

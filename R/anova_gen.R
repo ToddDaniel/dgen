@@ -54,7 +54,7 @@
 #' head(wide)
 #'
 #' @export
-anova_gen <- function(n, m, sd, labels = NULL, var_name = "x",
+anova_gen <- function(n, m, sd, labels = NULL, var_name = NULL,
                       layout = "long", decimals = 2, seed = NULL,
                       export_csv = FALSE, show_results = TRUE) {
 
@@ -70,20 +70,22 @@ anova_gen <- function(n, m, sd, labels = NULL, var_name = "x",
          "SD for each one, such as m = c(70, 75, 82) and sd = c(8, 9, 8).",
          call. = FALSE)
   }
-  labels <- variable_names(labels, n_groups, paste("Group", seq_len(n_groups)),
-                           "labels", "groups")
-  name   <- variable_names(var_name, 1, "x")
+  group_names <- variable_names(labels, n_groups,
+                                paste("Group", seq_len(n_groups)),
+                                "labels", "groups")
+  name <- variable_names(var_name, 1, "x")
   use_seed(seed)
 
   # 2. Build exact data, one group at a time
   groups <- exact_groups(n, m, sd, decimals)
-  data   <- arrange_groups(groups, labels, name, layout)
+  data   <- arrange_groups(groups, group_names, name, layout)
 
   # 3. Run the ANOVA, assemble the summary and hand everything back
   anova <- anova_table(groups)
   results <- list(
-    title = paste0("One-way ANOVA: ", name, " by group"),
-    table = compare_table(labels, groups, m, sd, decimals),
+    title = group_title("One-way ANOVA", var_name, labels, group_names,
+                        layout),
+    table = compare_table(group_names, groups, m, sd, decimals),
     lines = c(utils::capture.output(print(anova$table)), "",
               paste0("Eta squared = ", show_number(anova$eta_squared, 2),
                      "   Omega squared = ",

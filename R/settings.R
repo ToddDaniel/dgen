@@ -29,6 +29,24 @@ variable_names <- function(var_name, n_variables, default,
   var_name
 }
 
+# "North, South and West"
+and_list <- function(words) {
+  if (length(words) < 2) return(words)
+  paste(paste(words[-length(words)], collapse = ", "), "and",
+        words[length(words)])
+}
+
+# Titles never show a default name such as "x" or "Group 1". A grouped test
+# is titled by its variable ("score by group") when one was named and the
+# data have a column for it; otherwise by its groups, if those were named.
+group_title <- function(test, var_name, labels, labels_used, layout) {
+  if (!is.null(var_name) && layout == "long") {
+    return(paste0(test, ": ", var_name, " by group"))
+  }
+  if (!is.null(labels)) return(paste0(test, ": ", and_list(labels_used)))
+  paste0(test, ": ", length(labels_used), " groups")
+}
+
 # Stops unless x is exactly `how_many` numbers.
 need_numbers <- function(x, how_many, setting, example) {
   if (!is_number(x) || length(x) != how_many) {
@@ -121,4 +139,15 @@ ci_line <- function(test, of_what, decimals) {
   paste0("95% CI for the ", of_what, ": ",
          show_number(test$conf.int[1], decimals + 1), " to ",
          show_number(test$conf.int[2], decimals + 1))
+}
+
+# Slopes and standard errors can be large or tiny, so they are shown to 4
+# significant digits (160.0, 3.000, 0.6492, 0.08001) rather than a fixed
+# number of decimals.
+show_estimate <- function(x) {
+  vapply(x, function(value) {
+    if (value == 0) return("0")
+    whole_digits <- floor(log10(abs(value))) + 1
+    show_number(value, min(max(4 - whole_digits, 0), 12))
+  }, character(1), USE.NAMES = FALSE)
 }

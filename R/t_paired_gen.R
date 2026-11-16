@@ -64,9 +64,8 @@
 #'                          seed = 1)
 #'
 #' @export
-t_paired_gen <- function(n, m, sd, r, d = NULL,
-                         var_name = c("time1", "time2"), decimals = 2,
-                         seed = NULL, export_csv = FALSE,
+t_paired_gen <- function(n, m, sd, r, d = NULL, var_name = NULL,
+                         decimals = 2, seed = NULL, export_csv = FALSE,
                          show_results = TRUE) {
 
   # 1. Check inputs; with d, work out the second mean it stands for
@@ -105,7 +104,8 @@ t_paired_gen <- function(n, m, sd, r, d = NULL,
   differences <- values[, 2] - values[, 1]
   test <- stats::t.test(values[, 2], values[, 1], paired = TRUE)
   results <- list(
-    title = paste("Paired t test:", names[1], "and", names[2]),
+    title = paste0("Paired t test",
+                   if (!is.null(var_name)) paste0(": ", and_list(names))),
     table = compare_table(names, as.list(data), m, sd, decimals),
     lines = c(paste0("Correlation between ", names[1], " and ", names[2],
                      ": target ", show_number(r, 2), ", data ",

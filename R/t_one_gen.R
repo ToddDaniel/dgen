@@ -53,7 +53,7 @@
 #'
 #' @export
 t_one_gen <- function(n, m, sd, test_value, d = NULL, decimals = 2,
-                      var_name = "x", seed = NULL, export_csv = FALSE,
+                      var_name = NULL, seed = NULL, export_csv = FALSE,
                       show_results = TRUE) {
 
   # 1. Check inputs; with d, work out the mean it stands for
@@ -86,8 +86,9 @@ t_one_gen <- function(n, m, sd, test_value, d = NULL, decimals = 2,
   # 3. Run the test, assemble the summary and hand everything back
   test <- stats::t.test(values, mu = test_value)
   results <- list(
-    title = paste0("One-sample t test: ", name, " against a test value of ",
-                   format(test_value)),
+    title = paste0("One-sample t test",
+                   if (!is.null(var_name)) paste0(": ", name),
+                   " against a test value of ", format(test_value)),
     table = compare_table(name, list(values), m, sd, decimals),
     lines = c(paste0("Mean - test value = ",
                      show_number(mean(values) - test_value, decimals + 1)),

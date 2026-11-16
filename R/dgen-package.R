@@ -44,7 +44,7 @@
 #'
 #' @section Regression family:
 #' \describe{
-#'   \item{\code{\link{reg_gen}}}{Outcome variable from specified regression coefficients}
+#'   \item{\code{\link{reg_gen}}}{Simple and multiple linear regression}
 #' }
 #'
 #' @section Effect-size helpers:

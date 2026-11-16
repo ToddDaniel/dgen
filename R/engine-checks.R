@@ -233,8 +233,10 @@ is_number <- function(x) is.numeric(x) && length(x) > 0 && all(is.finite(x))
 
 is_whole <- function(x) is_number(x) && all(abs(x - round(x)) < 1e-8)
 
+# A number as text with a fixed number of decimals ("-0.00" is shown as
+# "0.00").
 show_number <- function(x, digits) {
-  formatC(x, format = "f", digits = digits)
+  sub("^-(0\\.?0*)$", "\\1", formatC(x, format = "f", digits = digits))
 }
 
 describe_values <- function(n, decimals) {

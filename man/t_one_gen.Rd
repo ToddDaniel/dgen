@@ -11,7 +11,7 @@ t_one_gen(
   test_value,
   d = NULL,
   decimals = 2,
-  var_name = "x",
+  var_name = NULL,
   seed = NULL,
   export_csv = FALSE,
   show_results = TRUE

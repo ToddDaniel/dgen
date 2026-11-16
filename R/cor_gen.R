@@ -96,9 +96,13 @@ cor_gen <- function(n, m, sd, r, decimals = 2, var_name = NULL, seed = NULL,
   # 3. Assemble the summary and hand everything back
   target_r <- if (length(r) == 1) matrix(c(1, r, r, 1), nrow = 2) else r
   results <- list(
-    title = if (n_variables == 2)
-              paste("Correlation between", names[1], "and", names[2])
-            else paste("Correlations among", n_variables, "variables"),
+    title = if (n_variables > 2) {
+      paste("Correlations among", n_variables, "variables")
+    } else if (is.null(var_name)) {
+      "Correlation between two variables"
+    } else {
+      paste("Correlation between", and_list(names))
+    },
     table = compare_table(names, as.list(data), m, sd, decimals),
     lines = utils::capture.output(print(correlation_table(data, target_r))),
     note  = data_note(data, decimals)
@@ -110,6 +114,7 @@ cor_gen <- function(n, m, sd, r, decimals = 2, var_name = NULL, seed = NULL,
 # the data, r squared (the effect size), and the usual t test of r.
 correlation_table <- function(data, target_r) {
   pairs <- which(upper.tri(target_r), arr.ind = TRUE)
+  pairs <- pairs[order(pairs[, "row"], pairs[, "col"]), , drop = FALSE]
   rows  <- lapply(seq_len(nrow(pairs)), function(pair) {
     first  <- pairs[pair, "row"]
     second <- pairs[pair, "col"]

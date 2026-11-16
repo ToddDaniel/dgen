@@ -20,10 +20,14 @@ variable_names <- function(var_name, n_variables, default,
   usable <- is.character(var_name) && length(var_name) == n_variables &&
     !anyNA(var_name) && all(nzchar(var_name)) && !anyDuplicated(var_name)
   if (!usable) {
+    example <- switch(things,
+                      groups     = "c(\"Online\", \"Classroom\")",
+                      categories = "c(\"Yes\", \"No\")",
+                      "c(\"hours\", \"exam\")")
     stop(setting, " must give ",
          if (n_variables == 1) "one name in quotes, such as \"score\"."
          else paste0("a different name for each of the ", n_variables, " ",
-                     things, ", such as c(\"hours\", \"exam\")."),
+                     things, ", such as ", example, "."),
          call. = FALSE)
   }
   var_name
@@ -125,8 +129,11 @@ reports_as <- function(achieved, target) {
   abs(achieved - target) < 0.005 - tie_margin
 }
 
-d_line <- function(achieved, target = NULL, definition = NULL) {
+# `direction` says which way the difference runs: "Online - Classroom".
+d_line <- function(achieved, target = NULL, definition = NULL,
+                   direction = NULL) {
   paste0("Cohen's d",
+         if (!is.null(direction)) paste0(" (", direction, ")"),
          if (is.null(target)) paste(" =", show_number(achieved, 2))
          else paste0(": target ", show_number(target, 2), ", data ",
                      show_number(achieved, 2)),
@@ -171,11 +178,24 @@ need_proportions <- function(x, how_many, setting, example) {
   }
 }
 
-need_sample_size <- function(n, setting) {
+need_sample_size <- function(n, setting, example = 80) {
   if (!is_whole(n) || length(n) != 1 || n < 2) {
     stop(setting, " (a sample size) must be a single whole number of 2 or ",
-         "more, such as ", setting, " = 80.", call. = FALSE)
+         "more, such as ", setting, " = ", example, ".", call. = FALSE)
   }
+}
+
+# The interval p plus or minus the margin, or a short note when every answer
+# is the same and the usual formula has no width.
+proportion_ci_line <- function(of_what, centre, margin) {
+  if (margin == 0) {
+    return(paste0("95% CI for the ", of_what, ": not shown (",
+                  if (of_what == "difference") "within each group ",
+                  "every answer is the same, so the usual formula gives no ",
+                  "interval)"))
+  }
+  paste0("95% CI for the ", of_what, ": ", show_number(centre - margin, 3),
+         " to ", show_number(centre + margin, 3))
 }
 
 # "70% of 80" is 56 people. When n x prop is not a whole number, the nearest

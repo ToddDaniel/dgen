@@ -10,8 +10,8 @@ t_paired_gen(
   sd,
   r,
   d = NULL,
-  var_name = NULL,
   decimals = 2,
+  var_name = NULL,
   seed = NULL,
   export_csv = FALSE,
   show_results = TRUE
@@ -30,11 +30,11 @@ you give \code{d}, give only the first mean.}
 \item{d}{Target Cohen's d, to 2 decimal places, as another way of setting
 the second mean.}
 
-\item{var_name}{Names for the two measurements, in quotes. The default is
-\code{c("time1", "time2")}.}
-
 \item{decimals}{Number of decimal places in the data. Use \code{0} for whole
 numbers.}
+
+\item{var_name}{Names for the two measurements, in quotes. The default is
+\code{c("time1", "time2")}.}
 
 \item{seed}{A whole number that makes the data reproducible: the same
 seed gives the same data. Leave it out for different data each time.}
@@ -68,18 +68,23 @@ to 2 decimal places, equals \code{d}. The SD of the differences, the t
 statistic, the p-value and the confidence interval are calculated from
 the data and shown in the summary; they are not targets.
 
-\strong{Direction.} Differences are always the second measurement minus the
-first.
+\strong{Direction.} Differences are always the first measurement minus the
+second: the mean difference, t, the confidence interval and Cohen's d all
+run that way, as they do in the Excel Data Analysis ToolPak (Variable 1
+minus Variable 2). The summary names the direction. If a student's
+software shows the opposite sign, it took the two measurements in the
+other order. The size of t and the p-value are the same either way.
 
 \strong{Why \code{r} matters.} The SD of the differences depends on the
 correlation: the more strongly the two measurements are related, the
 smaller the SD of the differences and the larger t becomes.
 
 \strong{Using \code{d}.} Cohen's d here is the mean difference divided by the SD of
-the differences (t divided by the square root of \code{n}). Give the first
-measurement's mean as \code{m}, and \code{d}; the second mean is set to
-\verb{m + d * SD of differences}, moved to the nearest mean that \code{n} rounded
-values can have.
+the differences (t divided by the square root of \code{n}), so a positive \code{d}
+makes the first measurement higher and a negative \code{d} makes the second
+higher. Give the first measurement's mean as \code{m}, and \code{d}; the second
+mean is set to \verb{m - d * SD of differences}, moved to the nearest mean
+that \code{n} rounded values can have.
 
 \strong{Limits.} The data are bell-shaped, with no minimum or maximum. When a
 request cannot be met, the function stops and says why; in rare cases
@@ -89,10 +94,11 @@ that can take several seconds.
 training <- t_paired_gen(n = 30, m = c(50, 55), sd = c(10, 10), r = 0.7,
                          var_name = c("before", "after"), decimals = 1,
                          seed = 1)
-t.test(training$after, training$before, paired = TRUE)
+t.test(training$before, training$after, paired = TRUE)   # before - after
 
-# The same design from an effect size
-training <- t_paired_gen(n = 30, m = 50, sd = c(10, 10), r = 0.7, d = 0.5,
+# The same design from an effect size. d is before minus after, so
+# d = -0.5 puts the "after" scores higher
+training <- t_paired_gen(n = 30, m = 50, sd = c(10, 10), r = 0.7, d = -0.5,
                          var_name = c("before", "after"), decimals = 1,
                          seed = 1)
 

@@ -8,10 +8,10 @@ anova_gen(
   n,
   m,
   sd,
+  decimals = 2,
   labels = NULL,
   var_name = NULL,
   layout = "long",
-  decimals = 2,
   seed = NULL,
   export_csv = FALSE,
   show_results = TRUE
@@ -25,8 +25,12 @@ number per group.}
 
 \item{sd}{Target standard deviations, one per group.}
 
+\item{decimals}{Number of decimal places in the data. Use \code{0} for whole
+numbers.}
+
 \item{labels}{Names of the groups, in quotes. The default is
-\code{"Group 1"}, \code{"Group 2"}, ...}
+\code{"Group 1"}, \code{"Group 2"}, ... In long layout the \code{group} column keeps
+the groups in this order.}
 
 \item{var_name}{Name for the measured variable, in quotes. The default is
 \code{"x"}. Not used in wide layout, where the columns are named by \code{labels}.}
@@ -36,9 +40,6 @@ a \code{group} column and a column for the measured variable. \code{"wide"} give
 one column per group, the layout the Excel Data Analysis ToolPak needs;
 if the groups differ in size, the shorter column ends with empty (\code{NA})
 cells.}
-
-\item{decimals}{Number of decimal places in the data. Use \code{0} for whole
-numbers.}
 
 \item{seed}{A whole number that makes the data reproducible: the same
 seed gives the same data. Leave it out for different data each time.}

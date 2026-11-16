@@ -18,18 +18,23 @@
 #' statistic, the p-value and the confidence interval are calculated from
 #' the data and shown in the summary; they are not targets.
 #'
-#' **Direction.** Differences are always the second measurement minus the
-#' first.
+#' **Direction.** Differences are always the first measurement minus the
+#' second: the mean difference, t, the confidence interval and Cohen's d all
+#' run that way, as they do in the Excel Data Analysis ToolPak (Variable 1
+#' minus Variable 2). The summary names the direction. If a student's
+#' software shows the opposite sign, it took the two measurements in the
+#' other order. The size of t and the p-value are the same either way.
 #'
 #' **Why `r` matters.** The SD of the differences depends on the
 #' correlation: the more strongly the two measurements are related, the
 #' smaller the SD of the differences and the larger t becomes.
 #'
 #' **Using `d`.** Cohen's d here is the mean difference divided by the SD of
-#' the differences (t divided by the square root of `n`). Give the first
-#' measurement's mean as `m`, and `d`; the second mean is set to
-#' `m + d * SD of differences`, moved to the nearest mean that `n` rounded
-#' values can have.
+#' the differences (t divided by the square root of `n`), so a positive `d`
+#' makes the first measurement higher and a negative `d` makes the second
+#' higher. Give the first measurement's mean as `m`, and `d`; the second
+#' mean is set to `m - d * SD of differences`, moved to the nearest mean
+#' that `n` rounded values can have.
 #'
 #' **Limits.** The data are bell-shaped, with no minimum or maximum. When a
 #' request cannot be met, the function stops and says why; in rare cases
@@ -57,16 +62,17 @@
 #' training <- t_paired_gen(n = 30, m = c(50, 55), sd = c(10, 10), r = 0.7,
 #'                          var_name = c("before", "after"), decimals = 1,
 #'                          seed = 1)
-#' t.test(training$after, training$before, paired = TRUE)
+#' t.test(training$before, training$after, paired = TRUE)   # before - after
 #'
-#' # The same design from an effect size
-#' training <- t_paired_gen(n = 30, m = 50, sd = c(10, 10), r = 0.7, d = 0.5,
+#' # The same design from an effect size. d is before minus after, so
+#' # d = -0.5 puts the "after" scores higher
+#' training <- t_paired_gen(n = 30, m = 50, sd = c(10, 10), r = 0.7, d = -0.5,
 #'                          var_name = c("before", "after"), decimals = 1,
 #'                          seed = 1)
 #'
 #' @export
-t_paired_gen <- function(n, m, sd, r, d = NULL, var_name = NULL,
-                         decimals = 2, seed = NULL, export_csv = FALSE,
+t_paired_gen <- function(n, m, sd, r, d = NULL, decimals = 2,
+                         var_name = NULL, seed = NULL, export_csv = FALSE,
                          show_results = TRUE) {
 
   # 1. Check inputs; with d, work out the second mean it stands for
@@ -75,24 +81,30 @@ t_paired_gen <- function(n, m, sd, r, d = NULL, var_name = NULL,
          "t_paired_gen(n = 30, m = c(50, 55), sd = c(10, 10), r = 0.7).",
          call. = FALSE)
   }
-  need_numbers(n, 1, "n", "30")
+  need_sample_size(n, "n", 30)
   need_numbers(sd, 2, "sd", "c(10, 10)")
   need_numbers(r, 1, "r", "0.7")
+  check_correlations(r, 2, 2)
+  check_decimals(decimals)
   check_d(d)
   names <- variable_names(var_name, 2, c("time1", "time2"))
   use_seed(seed)
   if (is.null(d)) {
     need_numbers(m, 2, "m", "c(50, 55)")
   } else {
-    need_numbers(m, 1, "m (the first mean, when d is given)", "50")
+    if (!is_number(m) || length(m) != 1) {
+      stop("When you give d, m is the first mean only: a single number, ",
+           "such as m = 50. The second mean is worked out from d.",
+           call. = FALSE)
+    }
     check_precision(m, decimals + 1, decimals, "means")
     sd_of_differences <- sqrt(sd[1]^2 + sd[2]^2 - 2 * r * sd[1] * sd[2])
-    m <- c(m, mean_from_d(m, d, sd_of_differences, n, decimals))
+    m <- c(m, mean_from_d(m, -d, sd_of_differences, n, decimals))
   }
 
   # 2. Build exact data; a typed-in d is one more promise for the engine
   cohens_d <- function(values) {
-    differences <- values[, 2] - values[, 1]
+    differences <- values[, 1] - values[, 2]
     mean(differences) / stats::sd(differences)
   }
   values <- exact_mv(
@@ -101,9 +113,11 @@ t_paired_gen <- function(n, m, sd, r, d = NULL, var_name = NULL,
   )$data
   data <- stats::setNames(as.data.frame(values), names)
 
-  # 3. Run the test, assemble the summary and hand everything back
-  differences <- values[, 2] - values[, 1]
-  test <- stats::t.test(values[, 2], values[, 1], paired = TRUE)
+  # 3. Run the test (first measurement minus second), assemble the summary
+  #    and hand everything back
+  direction   <- paste(names[1], "-", names[2])
+  differences <- values[, 1] - values[, 2]
+  test <- stats::t.test(values[, 1], values[, 2], paired = TRUE)
   results <- list(
     title = paste0("Paired t test",
                    if (!is.null(var_name)) paste0(": ", and_list(names))),
@@ -111,13 +125,13 @@ t_paired_gen <- function(n, m, sd, r, d = NULL, var_name = NULL,
     lines = c(paste0("Correlation between ", names[1], " and ", names[2],
                      ": target ", show_number(r, 2), ", data ",
                      show_number(stats::cor(values)[1, 2], 2)),
-              paste0("Differences (", names[2], " - ", names[1], "): mean = ",
+              paste0("Differences (", direction, "): mean = ",
                      show_number(mean(differences), decimals + 1), ", SD = ",
                      show_number(stats::sd(differences), decimals + 1)),
               t_line(test),
               ci_line(test, "mean difference", decimals),
               d_line(cohens_d(values), d,
-                     "mean difference / SD of differences")),
+                     "mean difference / SD of differences", direction)),
     note  = data_note(data, decimals)
   )
   deliver(data, results, show_results, export_csv, "t_paired_gen")

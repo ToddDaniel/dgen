@@ -10,10 +10,10 @@ t_indep_gen(
   m,
   sd,
   d = NULL,
+  decimals = 2,
   labels = NULL,
   var_name = NULL,
   layout = "long",
-  decimals = 2,
   seed = NULL,
   export_csv = FALSE,
   show_results = TRUE
@@ -32,8 +32,12 @@ as \code{n1} unless you say otherwise.}
 \item{d}{Target Cohen's d, to 2 decimal places, as another way of setting
 the second group's mean.}
 
-\item{labels}{Names of the two groups, in quotes. The default is
-\code{"Group 1"} and \code{"Group 2"}.}
+\item{decimals}{Number of decimal places in the data. Use \code{0} for whole
+numbers.}
+
+\item{labels}{Names of the two groups, in quotes, first group first. The
+default is \code{"Group 1"} and \code{"Group 2"}. In long layout the \code{group}
+column keeps the groups in this order.}
 
 \item{var_name}{Name for the measured variable, in quotes. The default is
 \code{"x"}. Not used in wide layout, where the columns are named by \code{labels}.}
@@ -43,9 +47,6 @@ a \code{group} column and a column for the measured variable. \code{"wide"} give
 one column per group, the layout the Excel Data Analysis ToolPak needs;
 if the groups differ in size, the shorter column ends with empty (\code{NA})
 cells.}
-
-\item{decimals}{Number of decimal places in the data. Use \code{0} for whole
-numbers.}
 
 \item{seed}{A whole number that makes the data reproducible: the same
 seed gives the same data. Leave it out for different data each time.}
@@ -77,12 +78,20 @@ the returned data, rounded to 2 decimal places, equals \code{d}. The t
 statistics, p-values and confidence interval are calculated from the data
 and shown in the summary; they are not targets.
 
-\strong{Direction.} Differences are always the second group minus the first.
+\strong{Direction.} Differences are always the first group minus the second:
+the difference in means, t, the confidence interval and Cohen's d all run
+that way, as they do in the Excel Data Analysis ToolPak (Variable 1 minus
+Variable 2) and in R. The summary names the direction. If a student's
+software shows the opposite sign, it listed the groups in the other
+order: a CSV file does not record the order, and some programs sort group
+names alphabetically. The size of t and the p-value are the same either
+way.
 
-\strong{Using \code{d}.} Cohen's d here is (second mean - first mean) / pooled SD.
-Give the first group's mean as \code{m}, and \code{d}; the second group's mean is
-set to \verb{m + d * pooled SD}, moved to the nearest mean that its \code{n2}
-rounded values can have.
+\strong{Using \code{d}.} Cohen's d here is (first mean - second mean) / pooled SD,
+so a positive \code{d} makes the first group higher and a negative \code{d} makes
+the second group higher. Give the first group's mean as \code{m}, and \code{d}; the
+second group's mean is set to \verb{m - d * pooled SD}, moved to the nearest
+mean that its \code{n2} rounded values can have.
 
 \strong{Limits.} The data are bell-shaped, with no minimum or maximum. When a
 request cannot be met, the function stops and says why; in rare cases
@@ -96,7 +105,7 @@ the measured variable.
 scores <- t_indep_gen(n1 = 25, n2 = 25, m = c(72, 78), sd = c(9, 10),
                       labels = c("Online", "Classroom"),
                       var_name = "score", decimals = 0, seed = 1)
-t.test(score ~ group, data = scores, var.equal = TRUE)
+t.test(score ~ group, data = scores, var.equal = TRUE)   # Online - Classroom
 
 # One column per group, for the Excel Data Analysis ToolPak
 wide <- t_indep_gen(n1 = 25, n2 = 25, m = c(72, 78), sd = c(9, 10),
@@ -104,8 +113,9 @@ wide <- t_indep_gen(n1 = 25, n2 = 25, m = c(72, 78), sd = c(9, 10),
                     decimals = 0, seed = 1, show_results = FALSE)
 head(wide)
 
-# The same design from an effect size: Classroom is 0.6 pooled SDs higher
-scores <- t_indep_gen(n1 = 25, n2 = 25, m = 72, sd = c(9, 10), d = 0.6,
+# The same design from an effect size. d is Online minus Classroom, so
+# d = -0.6 puts Classroom 0.6 pooled SDs higher
+scores <- t_indep_gen(n1 = 25, n2 = 25, m = 72, sd = c(9, 10), d = -0.6,
                       labels = c("Online", "Classroom"),
                       var_name = "score", decimals = 0, seed = 1)
 

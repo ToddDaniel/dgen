@@ -63,6 +63,9 @@ mean(scores$score)
 sd(scores$score)
 ```
 
+To look at all of the data in a spreadsheet-style window, type
+`View(scores)` in RStudio (with a capital V).
+
 A student who computes the mean and standard deviation gets 75.4 and 8.2.
 
 ## t tests
@@ -92,14 +95,24 @@ exam <- t_indep_gen(n1 = 25, n2 = 25, m = c(72, 78), sd = c(9, 10),
 head(exam)
 ```
 
-Differences are always the second group minus the first, so put the baseline
-group first.
+Differences are always the first group minus the second, the way Excel's
+Data Analysis ToolPak (Variable 1 minus Variable 2) and R subtract. Here that
+is Online minus Classroom, so the difference, t, the confidence interval and
+Cohen's d are negative, and the summary names the direction. If you would
+rather see positive numbers, list the group with the higher mean first.
+
+If a student's software shows the opposite sign, it listed the groups in the
+other order. A CSV file does not carry the order of the groups, and some
+programs sort group names alphabetically (Classroom before Online). The size
+of t and the p-value are the same either way.
 
 You can also describe the design by its effect size. Give the first group's
-mean and Cohen's d, and dgen works out the second mean:
+mean and Cohen's d, and dgen works out the second mean. Cohen's d is also
+first minus second: a positive d makes the first group higher, and a
+negative d makes the second group higher.
 
 ```{r}
-exam_d <- t_indep_gen(n1 = 25, n2 = 25, m = 72, sd = c(9, 10), d = 0.6,
+exam_d <- t_indep_gen(n1 = 25, n2 = 25, m = 72, sd = c(9, 10), d = -0.6,
                       labels = c("Online", "Classroom"),
                       var_name = "score", decimals = 0, seed = 1)
 ```
@@ -117,7 +130,8 @@ head(training)
 
 A paired design needs one more number: how strongly the two measurements are
 related. The higher that correlation, the smaller the spread of the
-differences and the larger t becomes.
+differences and the larger t becomes. Differences are the first measurement
+minus the second (here before minus after), as in Excel's paired t test.
 
 ## ANOVA
 
@@ -206,6 +220,8 @@ visits <- prop_two_gen(n1 = 120, n2 = 150, prop = c(0.25, 0.42),
                        var_name = "bought", seed = 1)
 ```
 
+Here too the difference is the first group minus the second.
+
 ### Chi-square
 
 Chi-square problems are written with counts, so that is what you type.
@@ -231,7 +247,9 @@ head(course)
 ```
 
 The proportion and chi-square tests in the summaries are the textbook
-versions, so they match a calculation by hand.
+versions, so they match a calculation by hand, Excel and JASP. R's own
+`chisq.test()` and `prop.test()` adjust a 2 x 2 table slightly unless you add
+`correct = FALSE`.
 
 ## Saving the data and seeing the results again
 
@@ -242,9 +260,11 @@ To save a dataset as a file you can open in Excel or give to students, add
 scores <- dgen(n = 30, m = 75.4, sd = 8.2, export_csv = "exam_scores.csv")
 ```
 
-The file goes in R's working folder. `export_csv = TRUE` names the file after
-the function instead. dgen never replaces a file that already exists; it adds
-a number to the new name.
+The file goes in R's working folder, and dgen prints the full location
+("Saved: ...") so you can find it. Type `getwd()` to see which folder that
+is; in RStudio, Session > Set Working Directory changes it. `export_csv =
+TRUE` names the file after the function instead. dgen never replaces a file
+that already exists; it adds a number to the new name.
 
 To see a summary again:
 

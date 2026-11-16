@@ -30,9 +30,10 @@ deliver <- function(data, results, show_results, export_csv, function_name) {
 #' of the matching test. `dgen_results()` shows that summary again.
 #'
 #' @details
-#' The summary is attached when the data are created. It stays with the data
-#' frame while you use it in R, but it is not saved in a CSV file, and it can
-#' be lost if you change the data (for example by removing rows).
+#' The summary is attached when the data are created and describes the data
+#' as they were at that moment. It is not updated if you change the data: after
+#' removing rows, for example, it still describes the full data set, and some
+#' changes drop it altogether. It is not saved in a CSV file.
 #'
 #' @param data A data frame created by a dgen function.
 #'

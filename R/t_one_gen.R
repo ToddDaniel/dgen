@@ -66,6 +66,8 @@ t_one_gen <- function(n, m, sd, test_value, d = NULL, decimals = 2,
     stop("Give the mean (m) or Cohen's d (d), but not both: d is another ",
          "way of setting the mean.", call. = FALSE)
   }
+  need_sample_size(n, "n", 25)
+  check_decimals(decimals)
   check_d(d)
   need_numbers(sd, 1, "sd", "5")
   need_numbers(test_value, 1, "test_value", "30")

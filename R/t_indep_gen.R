@@ -15,12 +15,20 @@
 #' statistics, p-values and confidence interval are calculated from the data
 #' and shown in the summary; they are not targets.
 #'
-#' **Direction.** Differences are always the second group minus the first.
+#' **Direction.** Differences are always the first group minus the second:
+#' the difference in means, t, the confidence interval and Cohen's d all run
+#' that way, as they do in the Excel Data Analysis ToolPak (Variable 1 minus
+#' Variable 2) and in R. The summary names the direction. If a student's
+#' software shows the opposite sign, it listed the groups in the other
+#' order: a CSV file does not record the order, and some programs sort group
+#' names alphabetically. The size of t and the p-value are the same either
+#' way.
 #'
-#' **Using `d`.** Cohen's d here is (second mean - first mean) / pooled SD.
-#' Give the first group's mean as `m`, and `d`; the second group's mean is
-#' set to `m + d * pooled SD`, moved to the nearest mean that its `n2`
-#' rounded values can have.
+#' **Using `d`.** Cohen's d here is (first mean - second mean) / pooled SD,
+#' so a positive `d` makes the first group higher and a negative `d` makes
+#' the second group higher. Give the first group's mean as `m`, and `d`; the
+#' second group's mean is set to `m - d * pooled SD`, moved to the nearest
+#' mean that its `n2` rounded values can have.
 #'
 #' **Limits.** The data are bell-shaped, with no minimum or maximum. When a
 #' request cannot be met, the function stops and says why; in rare cases
@@ -39,8 +47,9 @@
 #'   `c(9, 10)`.
 #' @param d Target Cohen's d, to 2 decimal places, as another way of setting
 #'   the second group's mean.
-#' @param labels Names of the two groups, in quotes. The default is
-#'   `"Group 1"` and `"Group 2"`.
+#' @param labels Names of the two groups, in quotes, first group first. The
+#'   default is `"Group 1"` and `"Group 2"`. In long layout the `group`
+#'   column keeps the groups in this order.
 #' @param var_name Name for the measured variable, in quotes. The default is
 #'   `"x"`. Not used in wide layout, where the columns are named by `labels`.
 #' @param layout `"long"` (the default) gives one row per observation, with
@@ -61,7 +70,7 @@
 #' scores <- t_indep_gen(n1 = 25, n2 = 25, m = c(72, 78), sd = c(9, 10),
 #'                       labels = c("Online", "Classroom"),
 #'                       var_name = "score", decimals = 0, seed = 1)
-#' t.test(score ~ group, data = scores, var.equal = TRUE)
+#' t.test(score ~ group, data = scores, var.equal = TRUE)   # Online - Classroom
 #'
 #' # One column per group, for the Excel Data Analysis ToolPak
 #' wide <- t_indep_gen(n1 = 25, n2 = 25, m = c(72, 78), sd = c(9, 10),
@@ -69,24 +78,26 @@
 #'                     decimals = 0, seed = 1, show_results = FALSE)
 #' head(wide)
 #'
-#' # The same design from an effect size: Classroom is 0.6 pooled SDs higher
-#' scores <- t_indep_gen(n1 = 25, n2 = 25, m = 72, sd = c(9, 10), d = 0.6,
+#' # The same design from an effect size. d is Online minus Classroom, so
+#' # d = -0.6 puts Classroom 0.6 pooled SDs higher
+#' scores <- t_indep_gen(n1 = 25, n2 = 25, m = 72, sd = c(9, 10), d = -0.6,
 #'                       labels = c("Online", "Classroom"),
 #'                       var_name = "score", decimals = 0, seed = 1)
 #'
 #' @export
-t_indep_gen <- function(n1, n2 = n1, m, sd, d = NULL,
-                        labels = NULL, var_name = NULL, layout = "long", decimals = 2, seed = NULL,
-                        export_csv = FALSE, show_results = TRUE) {
+t_indep_gen <- function(n1, n2 = n1, m, sd, d = NULL, decimals = 2,
+                        labels = NULL, var_name = NULL, layout = "long",
+                        seed = NULL, export_csv = FALSE, show_results = TRUE) {
 
   # 1. Check inputs; with d, work out the second mean it stands for
   if (missing(n1) || missing(m) || missing(sd)) {
     stop("t_indep_gen needs n1, m and sd, for example ",
          "t_indep_gen(n1 = 25, m = c(72, 78), sd = c(9, 10)).", call. = FALSE)
   }
-  need_numbers(n1, 1, "n1", "25")
-  need_numbers(n2, 1, "n2", "25")
+  need_sample_size(n1, "n1", 25)
+  need_sample_size(n2, "n2", 25)
   need_numbers(sd, 2, "sd", "c(9, 10)")
+  check_decimals(decimals)
   check_d(d)
   group_names <- variable_names(labels, 2, c("Group 1", "Group 2"),
                                 "labels", "groups")
@@ -95,41 +106,47 @@ t_indep_gen <- function(n1, n2 = n1, m, sd, d = NULL,
   if (is.null(d)) {
     need_numbers(m, 2, "m", "c(72, 78)")
   } else {
-    need_numbers(m, 1, "m (the first group's mean, when d is given)", "72")
+    if (!is_number(m) || length(m) != 1) {
+      stop("When you give d, m is the first group's mean only: a single ",
+           "number, such as m = 72. The second mean is worked out from d.",
+           call. = FALSE)
+    }
     check_precision(m, decimals + 1, decimals, "means")
     pooled_sd <- sqrt(((n1 - 1) * sd[1]^2 + (n2 - 1) * sd[2]^2) /
                         (n1 + n2 - 2))
-    m <- c(m, mean_from_d(m, d, pooled_sd, n2, decimals))
+    m <- c(m, mean_from_d(m, -d, pooled_sd, n2, decimals))
   }
 
   # 2. Build exact data; a typed-in d is one more promise for the engine
   cohens_d <- function(groups) {
     spread <- sqrt(((n1 - 1) * stats::var(groups[[1]]) +
                       (n2 - 1) * stats::var(groups[[2]])) / (n1 + n2 - 2))
-    (mean(groups[[2]]) - mean(groups[[1]])) / spread
+    (mean(groups[[1]]) - mean(groups[[2]])) / spread
   }
   groups <- exact_groups(
     c(n1, n2), m, sd, decimals, derived_means = !is.null(d),
-    also_check = if (!is.null(d)) function(groups) reports_as(cohens_d(groups), d)
+    also_check = if (!is.null(d)) {
+      function(groups) reports_as(cohens_d(groups), d)
+    }
   )
   data <- arrange_groups(groups, group_names, name, layout)
 
-  # 3. Run the tests, assemble the summary and hand everything back
-  pooled <- stats::t.test(groups[[2]], groups[[1]], var.equal = TRUE)
-  welch  <- stats::t.test(groups[[2]], groups[[1]])
+  # 3. Run the tests (first group minus second), assemble the summary and
+  #    hand everything back
+  direction <- paste(group_names[1], "-", group_names[2])
+  pooled <- stats::t.test(groups[[1]], groups[[2]], var.equal = TRUE)
+  welch  <- stats::t.test(groups[[1]], groups[[2]])
   results <- list(
     title = group_title("Independent-samples t test", var_name, labels,
                         group_names, layout),
     table = compare_table(group_names, groups, m, sd, decimals),
-    lines = c(paste0("Difference in means (", group_names[2], " - ",
-                     group_names[1],
-                     ") = ",
-                     show_number(mean(groups[[2]]) - mean(groups[[1]]),
+    lines = c(paste0("Difference in means (", direction, ") = ",
+                     show_number(mean(groups[[1]]) - mean(groups[[2]]),
                                  decimals + 1)),
               t_line(pooled, "equal variances"),
               t_line(welch, "Welch, unequal variances"),
               ci_line(pooled, "difference", decimals),
-              d_line(cohens_d(groups), d)),
+              d_line(cohens_d(groups), d, direction = direction)),
     note  = data_note(data, decimals)
   )
   deliver(data, results, show_results, export_csv, "t_indep_gen")

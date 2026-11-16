@@ -97,24 +97,41 @@ test_that("prop_two_gen: the summary is the textbook pooled z test", {
                          labels = c("Old layout", "New layout"),
                          var_name = "bought", seed = 1))
   pooled <- (30 + 54) / 270
-  z <- (0.36 - 0.25) / sqrt(pooled * (1 - pooled) * (1 / 120 + 1 / 150))
+  z <- (0.25 - 0.36) / sqrt(pooled * (1 - pooled) * (1 / 120 + 1 / 150))
   expect_true(any(grepl("Two-proportion z test: Old layout and New layout",
                         shown)))
   expect_true(any(grepl("New layout +150 +54 +0.360 +0.360", shown)))
   expect_true(any(grepl(
-    "Difference in proportions (New layout - Old layout) = 0.110", shown,
+    "Difference in proportions (Old layout - New layout) = -0.110", shown,
     fixed = TRUE)))
   expect_true(any(grepl(paste0("z = ", show_number(z, 2), ", p = .052"),
                         shown, fixed = TRUE)))
-  expect_true(any(grepl("Cohen's h = 0.24", shown, fixed = TRUE)))
+  expect_true(any(grepl("Cohen's h (Old layout - New layout) = -0.24", shown,
+                        fixed = TRUE)))
+  # the group column keeps the order of labels ("Old" sorts after "New")
+  expect_equal(levels(data$group), c("Old layout", "New layout"))
 
   # z squared is the chi-square of the 2 x 2 table, without correction
   chi <- stats::chisq.test(table(data$group, data$bought), correct = FALSE)
   expect_equal(unname(chi$statistic), z^2)
-  r_test <- stats::prop.test(c(54, 30), c(150, 120), correct = FALSE)
+  r_test <- stats::prop.test(c(30, 54), c(120, 150), correct = FALSE)
   expect_true(any(grepl(
     paste0("95% CI for the difference: ", show_number(r_test$conf.int[1], 3),
            " to ", show_number(r_test$conf.int[2], 3)), shown, fixed = TRUE)))
+})
+
+test_that("requests with nothing to test are refused or noted plainly", {
+  expect_error(prop_two_gen(10, 10, c(0.01, 0.02)),
+               "nobody in either group would answer \"Yes\"", fixed = TRUE)
+  expect_error(prop_two_gen(10, 10, c(0.99, 0.98)),
+               "everybody in either group would answer \"Yes\"", fixed = TRUE)
+  none <- capture.output(prop_one_gen(10, 0.01, 0.5, seed = 1))
+  expect_true(any(grepl("95% CI for the proportion: not shown", none,
+                        fixed = TRUE)))
+  expect_false(any(grepl("0.000 to 0.000", none, fixed = TRUE)))
+  split <- capture.output(prop_two_gen(10, 10, c(0.01, 0.99), seed = 1))
+  expect_true(any(grepl("95% CI for the difference: not shown", split,
+                        fixed = TRUE)))
 })
 
 test_that("prop_two_gen: rounding and small expected counts are reported", {

@@ -19,11 +19,7 @@ check_targets <- function(n, m, sd, r, decimals, r_digits,
     stop("n (the sample size) must be a single whole number, such as 30.",
          call. = FALSE)
   }
-  if (!is_whole(decimals) || length(decimals) != 1 ||
-      decimals < 0 || decimals > 6) {
-    stop("decimals must be a whole number from 0 to 6. Use 0 for whole-number ",
-         "data.", call. = FALSE)
-  }
+  check_decimals(decimals)
 
   # 2. Means and SDs
   if (!is_number(m) || !is_number(sd) || length(m) != length(sd)) {
@@ -53,6 +49,14 @@ check_targets <- function(n, m, sd, r, decimals, r_digits,
     return(NULL)
   }
   check_correlations(r, n_variables, r_digits)
+}
+
+check_decimals <- function(decimals) {
+  if (!is_whole(decimals) || length(decimals) != 1 ||
+      decimals < 0 || decimals > 6) {
+    stop("decimals must be a whole number from 0 to 6. Use 0 for whole-number ",
+         "data.", call. = FALSE)
+  }
 }
 
 check_precision <- function(targets, digits, decimals, what) {
@@ -149,13 +153,23 @@ check_feasible <- function(n, m, sd, decimals) {
     #    so only certain SDs exist (details in nearest_sds()).
     nearest <- nearest_sds(n, total, sd_units)
     if (!is.null(nearest)) {
+      # An SD that would print as 0 is not a usable suggestion.
       nearest <- nearest / units_per_one
+      nearest <- nearest[nearest >= 0.5 * 10^-(decimals + 1)]
       stop("With ", values, " and a mean of ",
            show_number(m[j], decimals + 1), ", the SD cannot be ",
-           show_number(sd[j], decimals + 1), ". The closest SDs you can get ",
-           "are ", paste(show_number(nearest, decimals + 1),
-                         collapse = " and "),
-           ". Use one of those, a larger n, or more decimals.", call. = FALSE)
+           show_number(sd[j], decimals + 1), ". ",
+           if (length(nearest) == 1) {
+             paste0("The closest SD you can get is ",
+                    show_number(nearest, decimals + 1), ". Use that")
+           } else if (length(nearest) == 2) {
+             paste0("The closest SDs you can get are ",
+                    paste(show_number(nearest, decimals + 1),
+                          collapse = " and "), ". Use one of those")
+           } else {
+             "Use a different SD"
+           },
+           ", a larger n, or more decimals.", call. = FALSE)
     }
     target_total[j] <- total
   }

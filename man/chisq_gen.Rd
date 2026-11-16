@@ -67,7 +67,10 @@ the second. The data then have two columns. The effect size is Cramer's
 V, which runs from 0 (no relationship) to 1.
 
 \strong{The test.} The summary shows Pearson's chi-square with no continuity
-correction, so it matches a hand calculation. If an expected count is
+correction, so it matches a hand calculation, Excel's \code{CHISQ.TEST} and
+JASP. In R, \code{chisq.test()} applies a continuity correction to a 2 x 2
+table unless you add \code{correct = FALSE}, so its default result for such a
+table is a little smaller than the summary's. If an expected count is
 below 5 the summary adds a note.
 }
 \examples{
@@ -85,5 +88,6 @@ results <- matrix(c(30, 10,
 course <- chisq_gen(counts = results, var_name = c("mode", "result"),
                     seed = 2)
 table(course$mode, course$result)
+chisq.test(table(course$mode, course$result), correct = FALSE)
 
 }

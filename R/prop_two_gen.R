@@ -16,7 +16,12 @@
 #' p-value, confidence interval and effect size are calculated from the data
 #' and shown in the summary; they are not targets.
 #'
-#' **Direction.** Differences are always the second group minus the first.
+#' **Direction.** Differences are always the first group minus the second:
+#' the difference in proportions, z, the confidence interval and Cohen's h
+#' all run that way, and the summary names the direction. If a student's
+#' software shows the opposite sign, it listed the groups in the other
+#' order: a CSV file does not record the order, and some programs sort group
+#' names alphabetically. The p-value is the same either way.
 #'
 #' **The test.** The summary shows the textbook pooled z test: the standard
 #' error uses the proportion in the two groups combined, with no continuity
@@ -28,15 +33,19 @@
 #' 0.2 is small, 0.5 medium and 0.8 large.
 #'
 #' The same data serve a chi-square test of independence on the 2 x 2
-#' table: its chi-square equals z squared.
+#' table: its chi-square equals z squared. In R, `prop.test()` and
+#' `chisq.test()` apply a continuity correction to a 2 x 2 table unless you
+#' add `correct = FALSE`, so their default results differ slightly from the
+#' summary. Excel and JASP make no correction by default.
 #'
 #' @inheritParams dgen
 #' @param n1,n2 Sample sizes of the first and second group. `n2` is the same
 #'   as `n1` unless you say otherwise.
 #' @param prop Target proportions answering "Yes" in the two groups, each
 #'   between 0 and 1, such as `c(0.6, 0.45)`.
-#' @param labels Names of the two groups, in quotes. The default is
-#'   `"Group 1"` and `"Group 2"`.
+#' @param labels Names of the two groups, in quotes, first group first. The
+#'   default is `"Group 1"` and `"Group 2"`. The `group` column keeps the
+#'   groups in this order.
 #' @param var_name Name for the Yes/No variable, in quotes. The default is
 #'   `"response"`.
 #' @param show_results `TRUE` (the default) prints a short summary: the
@@ -52,6 +61,9 @@
 #'                        labels = c("Old layout", "New layout"),
 #'                        var_name = "bought", seed = 1)
 #' table(visits$group, visits$bought)
+#'
+#' # The same test in R: chi-square is z squared
+#' chisq.test(table(visits$group, visits$bought), correct = FALSE)
 #'
 #' @export
 prop_two_gen <- function(n1, n2 = n1, prop, labels = NULL, var_name = NULL,
@@ -74,14 +86,23 @@ prop_two_gen <- function(n1, n2 = n1, prop, labels = NULL, var_name = NULL,
   # 2. Build exact data: each proportion as a whole count, one row each
   n     <- c(n1, n2)
   count <- whole_count(n, prop)
+  if (sum(count) == 0 || sum(count) == sum(n)) {
+    stop("With these sample sizes and proportions, ",
+         if (sum(count) == 0) "nobody" else "everybody",
+         " in either group would answer \"Yes\", so there is no difference ",
+         "to test. Use larger groups, or proportions further from ",
+         if (sum(count) == 0) "0." else "1.", call. = FALSE)
+  }
   data  <- exact_counts(matrix(c(count, n - count), nrow = 2,
                                dimnames = list(group_names, c("Yes", "No"))))
   names(data) <- c("group", name)
 
-  # 3. Run the test, assemble the summary and hand everything back
+  # 3. Run the test (first group minus second), assemble the summary and
+  #    hand everything back
   proportion <- count / n
   pooled     <- sum(count) / sum(n)
-  difference <- proportion[2] - proportion[1]
+  direction  <- paste(group_names[1], "-", group_names[2])
+  difference <- proportion[1] - proportion[2]
   z      <- difference / sqrt(pooled * (1 - pooled) * sum(1 / n))
   margin <- stats::qnorm(0.975) * sqrt(sum(proportion * (1 - proportion) / n))
   results <- list(
@@ -95,14 +116,12 @@ prop_two_gen <- function(n1, n2 = n1, prop, labels = NULL, var_name = NULL,
       row.names = group_names, check.names = FALSE
     ),
     lines = c(rounding_lines(n, prop, count, "Yes"),
-              paste0("Difference in proportions (", group_names[2], " - ",
-                     group_names[1], ") = ", show_number(difference, 3)),
+              paste0("Difference in proportions (", direction, ") = ",
+                     show_number(difference, 3)),
               z_line(z, "pooled"),
-              paste0("95% CI for the difference: ",
-                     show_number(difference - margin, 3), " to ",
-                     show_number(difference + margin, 3)),
-              paste0("Cohen's h = ",
-                     show_number(cohens_h(proportion[2], proportion[1]), 2)),
+              proportion_ci_line("difference", difference, margin),
+              paste0("Cohen's h (", direction, ") = ",
+                     show_number(cohens_h(proportion[1], proportion[2]), 2)),
               small_expected_note(outer(n, c(pooled, 1 - pooled)), "z test")),
     note  = data_note(data)
   )

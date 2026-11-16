@@ -105,3 +105,26 @@ test_that("problems are explained in plain language", {
                     export_csv = 5),
                "export_csv must be")
 })
+
+test_that("refusals never suggest an SD of zero, and a text n is named", {
+  expect_error(dgen(6, 10, 0.4, decimals = 0),
+               "The closest SD you can get is 0.6. Use that, a larger n",
+               fixed = TRUE)
+  expect_error(dgen("30", 75, 8),
+               "n (the sample size) must be a single whole number",
+               fixed = TRUE)
+})
+
+test_that("every function takes its settings in the same order", {
+  order_of <- function(f) names(formals(f))
+  tail_end <- c("seed", "export_csv", "show_results")
+  for (f in list(dgen, t_one_gen, t_indep_gen, t_paired_gen, anova_gen,
+                 cor_gen, reg_gen, prop_one_gen, prop_two_gen, chisq_gen)) {
+    settings <- order_of(f)
+    expect_equal(utils::tail(settings, 3), tail_end)
+    middle <- intersect(settings, c("d", "decimals", "labels", "var_name",
+                                    "layout"))
+    expect_equal(middle, intersect(c("d", "decimals", "labels", "var_name",
+                                     "layout"), settings))
+  }
+})

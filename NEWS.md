@@ -33,6 +33,9 @@ effect size), and returns the data as a plain data frame.
 - `show_results = FALSE` turns the printed summary off.
 - `layout = "wide"` in `t_indep_gen()` and `anova_gen()` gives one column
   per group, for the Excel Data Analysis ToolPak.
+- Differences are always the first group (or measurement) minus the second
+  in `t_indep_gen()`, `t_paired_gen()` and `prop_two_gen()`, and every
+  summary names the direction.
 
 ## What "exact" means
 

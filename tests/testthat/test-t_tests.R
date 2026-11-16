@@ -8,7 +8,7 @@ pooled_d <- function(first, second) {
   n2 <- length(second)
   spread <- sqrt(((n1 - 1) * stats::var(first) + (n2 - 1) * stats::var(second)) /
                    (n1 + n2 - 2))
-  (mean(second) - mean(first)) / spread
+  (mean(first) - mean(second)) / spread
 }
 
 # ---- t_one_gen ---------------------------------------------------------------
@@ -105,7 +105,30 @@ test_that("t_indep_gen: n2 defaults to n1, and the mean difference is exact", {
   expect_equal(as.vector(table(data$group)), c(25, 25))
   expect_equal(levels(data$group), c("Group 1", "Group 2"))
   groups <- split(data$x, data$group)
-  expect_equal(mean(groups[[2]]) - mean(groups[[1]]), 6)
+  expect_equal(mean(groups[[1]]) - mean(groups[[2]]), -6)
+})
+
+test_that("t_indep_gen: the group column keeps the order of labels", {
+  # "Online" sorts after "Classroom"; the factor must not re-sort them
+  data <- t_indep_gen(n1 = 12, n2 = 15, m = c(72, 78), sd = c(9, 10),
+                      labels = c("Online", "Classroom"), var_name = "score",
+                      decimals = 0, seed = 1, show_results = FALSE)
+  expect_s3_class(data$group, "factor")
+  expect_equal(levels(data$group), c("Online", "Classroom"))
+  expect_equal(as.vector(table(data$group)), c(12, 15))
+  # so R's formula call subtracts the same way as the summary
+  by_formula <- stats::t.test(score ~ group, data = data, var.equal = TRUE)
+  expect_true(any(grepl(t_line(by_formula, "equal variances"),
+                        dgen_results(data)$lines, fixed = TRUE)))
+  expect_lt(by_formula$statistic, 0)
+})
+
+test_that("t_indep_gen: a positive d makes the first group higher", {
+  data <- t_indep_gen(n1 = 25, m = 72, sd = c(9, 10), d = 0.6, decimals = 0,
+                      seed = 1, show_results = FALSE)
+  groups <- split(data$x, data$group)
+  expect_gt(mean(groups[[1]]), mean(groups[[2]]))
+  expect_equal(mean(groups[[1]]), 72)
 })
 
 test_that("t_indep_gen: a typed-in d is exact to 2 decimals", {
@@ -152,16 +175,20 @@ test_that("t_indep_gen: the summary shows both t tests R would give", {
                         labels = c("Online", "Classroom"), var_name = "score",
                         decimals = 0, seed = 1))
   groups <- split(data$score, data$group)
-  pooled <- stats::t.test(groups$Classroom, groups$Online, var.equal = TRUE)
-  welch  <- stats::t.test(groups$Classroom, groups$Online)
-  expect_true(any(grepl("Difference in means (Classroom - Online) = 6.0",
+  pooled <- stats::t.test(groups$Online, groups$Classroom, var.equal = TRUE)
+  welch  <- stats::t.test(groups$Online, groups$Classroom)
+  expect_true(any(grepl("Difference in means (Online - Classroom) = -6.0",
                         shown, fixed = TRUE)))
+  expect_true(any(grepl("95% CI for the difference: -11.4 to -0.6", shown,
+                        fixed = TRUE)))
+  expect_true(any(grepl("Cohen's d (Online - Classroom) = -0.63", shown,
+                        fixed = TRUE)))
   expect_true(any(grepl(t_line(pooled, "equal variances"), shown,
                         fixed = TRUE)))
   expect_true(any(grepl(t_line(welch, "Welch, unequal variances"), shown,
                         fixed = TRUE)))
   expect_true(any(grepl("Online +25 +72.0 +72.0 +9.0 +9.0", shown)))
-  expect_equal(t_line(pooled), "t(48) = 2.22, p = .031")
+  expect_equal(t_line(pooled), "t(48) = -2.22, p = .031")
 })
 
 test_that("t_indep_gen: the same data serve the quiet applications", {
@@ -183,7 +210,22 @@ test_that("t_indep_gen: problems are explained in plain language", {
   expect_error(t_indep_gen(25, m = 72, sd = c(9, 10)),
                "m must be 2 numbers, such as m = c(72, 78)", fixed = TRUE)
   expect_error(t_indep_gen(25, m = c(72, 78), sd = c(9, 10), d = 0.5),
-               "the first group's mean, when d is given")
+               "When you give d, m is the first group's mean only: a single number, such as m = 72",
+               fixed = TRUE)
+  # a bad sample size or correlation is named even when d is given
+  expect_error(t_indep_gen(n1 = 1, n2 = 1, m = 72, sd = c(9, 10), d = 0.5),
+               "n1 (a sample size) must be a single whole number of 2 or more",
+               fixed = TRUE)
+  expect_error(t_one_gen("a", sd = 5, test_value = 30, d = 0.5),
+               "n (a sample size) must be a single whole number", fixed = TRUE)
+  expect_error(t_one_gen(25, sd = 5, test_value = 30, d = 0.5, decimals = 9),
+               "decimals must be a whole number from 0 to 6")
+  expect_warning(
+    expect_error(t_paired_gen(30, m = 50, sd = c(10, 10), r = 1.5, d = 0.5),
+                 "A correlation must be between -1 and 1"), NA)
+  expect_error(t_indep_gen(25, m = c(72, 78), sd = c(9, 10),
+                           labels = c("A", "A")),
+               "such as c(\"Online\", \"Classroom\")", fixed = TRUE)
   expect_error(t_indep_gen(25, m = c(72, 78), sd = c(9, 10), labels = "A"),
                "labels must give a different name for each of the 2 groups",
                fixed = TRUE)
@@ -225,9 +267,11 @@ test_that("t_paired_gen: a typed-in d is exact to 2 decimals", {
         data <- t_paired_gen(n = 30, m = 50, sd = c(10, 10), r = 0.7, d = d,
                              decimals = decimals, seed = seed,
                              show_results = FALSE)
-        differences <- data$time2 - data$time1
+        differences <- data$time1 - data$time2
         achieved <- mean(differences) / stats::sd(differences)
         expect_true(abs(achieved - d) < 0.005, info = paste(d, decimals, seed))
+        # a positive d makes the first measurement higher
+        expect_equal(sign(mean(differences)), sign(d))
         expect_true(reported(mean(data$time1), 50, decimals))
         expect_true(abs(stats::cor(data$time1, data$time2) - 0.7) < 0.005)
       }
@@ -240,16 +284,19 @@ test_that("t_paired_gen: the summary shows the paired test R would give", {
     data <- t_paired_gen(n = 30, m = c(50, 55), sd = c(10, 10), r = 0.7,
                          var_name = c("before", "after"), decimals = 1,
                          seed = 1))
-  test <- stats::t.test(data$after, data$before, paired = TRUE)
+  test <- stats::t.test(data$before, data$after, paired = TRUE)
   expect_true(any(grepl("Paired t test: before and after", shown)))
   expect_true(any(grepl(
     "Correlation between before and after: target 0.70, data 0.70", shown,
     fixed = TRUE)))
-  expect_true(any(grepl("Differences (after - before): mean = 5.00, SD = ",
+  expect_true(any(grepl("Differences (before - after): mean = -5.00, SD = ",
                         shown, fixed = TRUE)))
   expect_true(any(grepl(t_line(test), shown, fixed = TRUE)))
+  expect_lt(test$statistic, 0)
+  expect_true(any(grepl("Cohen's d (before - after) = -0.65", shown,
+                        fixed = TRUE)))
   # d for a paired design is t / sqrt(n)
-  d <- mean(data$after - data$before) / stats::sd(data$after - data$before)
+  d <- mean(data$before - data$after) / stats::sd(data$before - data$after)
   expect_equal(d, unname(test$statistic) / sqrt(30))
 })
 
@@ -266,6 +313,9 @@ test_that("t_paired_gen: problems are explained in plain language", {
                fixed = TRUE)
   expect_error(t_paired_gen(30, m = 50, sd = c(10, 10), r = 0.7),
                "m must be 2 numbers")
+  expect_error(t_paired_gen(30, m = c(50, 55), sd = c(10, 10), r = 0.7,
+                            d = 0.5),
+               "When you give d, m is the first mean only", fixed = TRUE)
 })
 
 # ---- Shared behaviour --------------------------------------------------------

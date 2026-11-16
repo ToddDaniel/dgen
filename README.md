@@ -11,8 +11,13 @@ will get before you hand out the data.
 
 ## Installation
 
-Until dgen is on CRAN, install it from GitHub. In R or RStudio, run these two
-lines once:
+In R or RStudio, run this line once:
+
+```r
+install.packages("dgen")
+```
+
+The development version is on GitHub:
 
 ```r
 install.packages("remotes")
@@ -55,7 +60,8 @@ See this again with dgen_results(your_data).
 ```
 
 
-The data are in `scores`:
+The data are in `scores`. In RStudio, `View(scores)` opens all of it in a
+spreadsheet-style window; `head()` shows the first rows:
 
 ```r
 head(scores, 4)
@@ -91,16 +97,21 @@ Independent-samples t test: score by group
 Online    25          72.0        72.0         9.0       9.0       49      86
 Classroom 25          78.0        78.0        10.0      10.0       60      98
 
-Difference in means (Classroom - Online) = 6.0
-t(48) = 2.22, p = .031   (equal variances)
-t(47.5) = 2.22, p = .031   (Welch, unequal variances)
-95% CI for the difference: 0.6 to 11.4
-Cohen's d = 0.63
+Difference in means (Online - Classroom) = -6.0
+t(48) = -2.22, p = .031   (equal variances)
+t(47.5) = -2.22, p = .031   (Welch, unequal variances)
+95% CI for the difference: -11.4 to -0.6
+Cohen's d (Online - Classroom) = -0.63
 
 50 rows, 2 columns (group, score). Whole numbers.
 See this again with dgen_results(your_data).
 ```
 
+
+Differences are always the first group minus the second (here Online minus
+Classroom), the way Excel and R subtract, and the summary names the
+direction. If a student's software shows the opposite sign, it listed the
+groups in the other order.
 
 `t_one_gen()` does the same for a one-sample t test and `t_paired_gen()` for
 before-and-after measurements on the same people.
@@ -198,8 +209,10 @@ To save the data as a file you can open in Excel or give to students, add
 scores <- dgen(n = 30, m = 75.4, sd = 8.2, export_csv = "exam_scores.csv")
 ```
 
-`export_csv = TRUE` names the file after the function. dgen never replaces a
-file that already exists; it adds a number to the new name instead.
+The file is saved in R's working folder, and dgen prints its full location
+so you can find it (`getwd()` shows which folder that is). `export_csv = TRUE`
+names the file after the function. dgen never replaces a file that already
+exists; it adds a number to the new name instead.
 
 To see a summary again later:
 

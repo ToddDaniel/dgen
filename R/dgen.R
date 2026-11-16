@@ -78,7 +78,7 @@ dgen <- function(n, m, sd, decimals = 2, var_name = NULL, seed = NULL,
     stop("dgen needs n, m and sd, for example dgen(n = 30, m = 75, sd = 8).",
          call. = FALSE)
   }
-  if (length(n) != 1) {
+  if (!is_number(n) || length(n) != 1) {
     stop("n (the sample size) must be a single whole number, such as 30.",
          call. = FALSE)
   }

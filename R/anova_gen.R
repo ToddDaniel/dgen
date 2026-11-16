@@ -32,7 +32,8 @@
 #' @param m Target group means, one per group, such as `c(70, 75, 82)`.
 #' @param sd Target standard deviations, one per group.
 #' @param labels Names of the groups, in quotes. The default is
-#'   `"Group 1"`, `"Group 2"`, ...
+#'   `"Group 1"`, `"Group 2"`, ... In long layout the `group` column keeps
+#'   the groups in this order.
 #' @param show_results `TRUE` (the default) prints a short summary: the
 #'   targets beside what the data actually have, then the ANOVA table and
 #'   effect sizes. `FALSE` prints nothing.
@@ -55,9 +56,9 @@
 #' head(wide)
 #'
 #' @export
-anova_gen <- function(n, m, sd, labels = NULL, var_name = NULL,
-                      layout = "long", decimals = 2, seed = NULL,
-                      export_csv = FALSE, show_results = TRUE) {
+anova_gen <- function(n, m, sd, decimals = 2, labels = NULL, var_name = NULL,
+                      layout = "long", seed = NULL, export_csv = FALSE,
+                      show_results = TRUE) {
 
   # 1. Check inputs
   if (missing(n) || missing(m) || missing(sd)) {

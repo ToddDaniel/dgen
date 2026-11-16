@@ -1,12 +1,10 @@
-#' dgen: Data Generator for Statistical Teaching and Testing
+#' dgen: Classroom Datasets with Exact Summary Statistics
 #'
-#' Generates datasets with exact statistical properties -- means, standard
-#' deviations, and correlations -- for teaching statistics and validating
-#' analytical workflows. Uses iterative refinement to hit specified
-#' parameters exactly, rather than approximating them. Each function
-#' generates data and (by default) automatically runs the corresponding
-#' statistical test, returning results alongside effect sizes and
-#' assumption checks.
+#' Generates datasets whose summary statistics match the targets you choose.
+#' Means, standard deviations, correlations and counts hold exactly in the
+#' rounded data students receive. Functions are named for the test being
+#' taught, and each can run the matching test and report an effect size, so
+#' instructors can check the result before assigning the data.
 #'
 #' @section Core generators:
 #' \describe{
@@ -30,26 +28,17 @@
 #'   \item{\code{\link{anova_gen}}}{One-way ANOVA}
 #' }
 #'
-#' @section Chi-square family:
+#' @section Proportions and chi-square:
 #' \describe{
-#'   \item{\code{\link{chisq_gof_gen}}}{Goodness-of-fit test data}
-#'   \item{\code{\link{chisq_indep_gen}}}{Test of independence data}
+#'   \item{\code{\link{prop_one_gen}}}{One-proportion z test}
+#'   \item{\code{\link{prop_two_gen}}}{Two-proportion z test}
+#'   \item{\code{\link{chisq_gen}}}{Chi-square tests: goodness of fit and
+#'     independence}
 #' }
 #'
-#' @section Proportion family:
-#' \describe{
-#'   \item{\code{\link{oneprop_gen}}}{One-sample proportion test data}
-#'   \item{\code{\link{twoprop_gen}}}{Two-sample proportion test data}
-#' }
-#'
-#' @section Regression family:
+#' @section Regression:
 #' \describe{
 #'   \item{\code{\link{reg_gen}}}{Simple and multiple linear regression}
-#' }
-#'
-#' @section Effect-size helpers:
-#' \describe{
-#'   \item{\code{\link{h_to_prop}}}{Cohen's h to a second target proportion}
 #' }
 #'
 #' @references

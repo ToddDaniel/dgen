@@ -168,8 +168,7 @@ regression_lines <- function(data) {
   c(utils::capture.output(print(table)),
     "",
     paste0("F(", f[["numdf"]], ", ", f[["dendf"]], ") = ",
-           show_number(f[["value"]], 2), ", p ",
-           if (p < 0.001) "< .001" else paste("=", show_p(p))),
+           show_number(f[["value"]], 2), ", p ", p_text(p)),
     paste0("R squared = ", show_number(model$r.squared, 2),
            "   Adjusted R squared = ", show_number(model$adj.r.squared, 2)))
 }

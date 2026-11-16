@@ -76,12 +76,14 @@ arrange_groups <- function(groups, labels, name, layout) {
   stats::setNames(data, c("group", name))
 }
 
-data_note <- function(data, decimals) {
+# `decimals` is left out for data made of categories.
+data_note <- function(data, decimals = NULL) {
   paste0(nrow(data), " rows, ", ncol(data),
          if (ncol(data) == 1) " column (" else " columns (",
-         paste(names(data), collapse = ", "), "). ",
-         if (decimals == 0) "Whole numbers."
-         else paste0("Rounded to ", decimals, " decimal place",
+         paste(names(data), collapse = ", "), ").",
+         if (is.null(decimals)) ""
+         else if (decimals == 0) " Whole numbers."
+         else paste0(" Rounded to ", decimals, " decimal place",
                      if (decimals > 1) "s", "."),
          if (anyNA(data)) " Shorter groups end with empty (NA) cells.")
 }
@@ -89,6 +91,11 @@ data_note <- function(data, decimals) {
 # p-values the way textbooks print them: .031, or < .001
 show_p <- function(p) {
   ifelse(p < 0.001, "< .001", sub("^0", "", show_number(p, 3)))
+}
+
+# The same, ready to follow "p": "= .031" or "< .001"
+p_text <- function(p) {
+  if (p < 0.001) "< .001" else paste("=", show_p(p))
 }
 
 # ---- Effect sizes and test results ------------------------------------------
@@ -131,7 +138,7 @@ t_line <- function(test, label = NULL) {
   df <- unname(test$parameter)
   paste0("t(", if (abs(df - round(df)) < 1e-8) round(df) else show_number(df, 1),
          ") = ", show_number(unname(test$statistic), 2), ", p ",
-         if (test$p.value < 0.001) "< .001" else paste("=", show_p(test$p.value)),
+         p_text(test$p.value),
          if (!is.null(label)) paste0("   (", label, ")"))
 }
 
@@ -150,4 +157,59 @@ show_estimate <- function(x) {
     whole_digits <- floor(log10(abs(value))) + 1
     show_number(value, min(max(4 - whole_digits, 0), 12))
   }, character(1), USE.NAMES = FALSE)
+}
+
+# ---- Proportions and counts -------------------------------------------------
+
+# Stops unless x is `how_many` proportions strictly between 0 and 1.
+need_proportions <- function(x, how_many, setting, example) {
+  if (!is_number(x) || length(x) != how_many || any(x <= 0) || any(x >= 1)) {
+    stop(setting, " must be ",
+         if (how_many == 1) "a proportion" else paste(how_many, "proportions"),
+         " between 0 and 1 (not a percentage), such as ", setting, " = ",
+         example, ".", call. = FALSE)
+  }
+}
+
+need_sample_size <- function(n, setting) {
+  if (!is_whole(n) || length(n) != 1 || n < 2) {
+    stop(setting, " (a sample size) must be a single whole number of 2 or ",
+         "more, such as ", setting, " = 80.", call. = FALSE)
+  }
+}
+
+# "70% of 80" is 56 people. When n x prop is not a whole number, the nearest
+# whole count is used (a half is rounded up).
+whole_count <- function(n, prop) floor(n * prop + 0.5 + tie_margin)
+
+# One line for each proportion that could not be met exactly, saying which
+# count was used instead.
+rounding_lines <- function(n, prop, count, what) {
+  inexact <- abs(n * prop - count) > 1e-6
+  if (!any(inexact)) return(character())
+  paste0(format(prop[inexact]), " of ", n[inexact], " is ",
+         format(round(n[inexact] * prop[inexact], 2)),
+         ", not a whole number, so the nearest count is used: ",
+         count[inexact], " ", what, " (proportion ",
+         show_number(count[inexact] / n[inexact], 3), ").")
+}
+
+# Cohen's h: the difference between two proportions on the arcsine scale
+cohens_h <- function(proportion, compared_with) {
+  2 * asin(sqrt(proportion)) - 2 * asin(sqrt(compared_with))
+}
+
+# Two-sided z test line: "z = 3.58, p < .001"
+z_line <- function(z, label = NULL) {
+  paste0("z = ", show_number(z, 2), ", p ", p_text(2 * stats::pnorm(-abs(z))),
+         if (!is.null(label)) paste0("   (", label, ")"))
+}
+
+# A plain-language note, in place of R's warning, when the usual rule of
+# thumb for these tests (every expected count at least 5) is not met.
+small_expected_note <- function(expected, test) {
+  if (all(expected >= 5)) return(character())
+  paste0("Note: an expected count is below 5 (the smallest is ",
+         show_number(min(expected), 1), "), so the ", test,
+         " is only approximate for these data.")
 }

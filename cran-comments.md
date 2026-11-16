@@ -29,8 +29,9 @@ None. This is a new package.
 
 ## Notes for the reviewer
 
-- The package has no dependencies beyond base R and the recommended
-  packages (`stats`, `utils`).
+- The package imports nothing beyond the base packages `stats` and `utils`.
+  `knitr`, `rmarkdown` and `testthat` are suggested only (vignette and
+  tests).
 - No files are written by default. Data are saved to a CSV file only when
   the user sets `export_csv`; examples and tests that do so write to
   `tempdir()` only.

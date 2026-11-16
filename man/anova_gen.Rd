@@ -2,87 +2,94 @@
 % Please edit documentation in R/anova_gen.R
 \name{anova_gen}
 \alias{anova_gen}
-\title{Generate Data for a One-Way ANOVA}
+\title{Generate data for a one-way ANOVA}
 \usage{
 anova_gen(
-  k,
   n,
-  means,
-  sds,
+  m,
+  sd,
   labels = NULL,
-  dv_name = "Score",
-  factor_name = "Group",
+  var_name = "x",
+  layout = "long",
   decimals = 2,
   seed = NULL,
   export_csv = FALSE,
-  output_format = "long",
-  run_analysis = TRUE
+  show_results = TRUE
 )
 }
 \arguments{
-\item{k}{Number of groups (integer >= 3)}
+\item{n}{Sample size of each group: one number for equal groups, or one
+number per group.}
 
-\item{n}{Per-group sample size. Either a single integer (equal group sizes)
-or a vector of length \code{k} (unequal sizes).}
+\item{m}{Target group means, one per group, such as \code{c(70, 75, 82)}.}
 
-\item{means}{Numeric vector of length \code{k} specifying target group means}
+\item{sd}{Target standard deviations, one per group.}
 
-\item{sds}{Numeric vector of length \code{k} specifying target group SDs}
+\item{labels}{Names of the groups, in quotes. The default is
+\code{"Group 1"}, \code{"Group 2"}, ...}
 
-\item{labels}{Character vector of length \code{k} specifying group labels.
-Defaults to \code{"Group1"}, \code{"Group2"}, etc.}
+\item{var_name}{Name for the measured variable, in quotes. The default is
+\code{"x"}. Not used in wide layout, where the columns are named by \code{labels}.}
 
-\item{dv_name}{Name for the dependent variable column (default =
-\code{"Score"})}
+\item{layout}{\code{"long"} (the default) gives one row per observation, with
+a \code{group} column and a column for the measured variable. \code{"wide"} gives
+one column per group, the layout the Excel Data Analysis ToolPak needs;
+if the groups differ in size, the shorter column ends with empty (\code{NA})
+cells.}
 
-\item{factor_name}{Name for the grouping factor column (default =
-\code{"Group"})}
+\item{decimals}{Number of decimal places in the data. Use \code{0} for whole
+numbers.}
 
-\item{decimals}{Number of decimal places for rounding (default = 2)}
+\item{seed}{A whole number that makes the data reproducible: the same
+seed gives the same data. Leave it out for different data each time.}
 
-\item{seed}{Integer seed for reproducibility (default = NULL)}
+\item{export_csv}{\code{FALSE} (the default) saves nothing. \code{TRUE} saves the
+data as a CSV file named after the function, in the working directory.
+A file name in quotes, such as \code{"exam.csv"}, saves to that file. An
+existing file is never replaced; a number is added to the new name.}
 
-\item{export_csv}{Either \code{FALSE} (default; nothing is written),
-\code{TRUE} (write a CSV with an auto-generated name to the current
-working directory), or a file path giving the CSV destination.
-When \code{output_format = "both"} and a file path is supplied,
-\code{_wide}/\code{_long} is inserted before the extension}
-
-\item{output_format}{One of \code{"wide"}, \code{"long"}, or \code{"both"}
-(default = \code{"long"})}
-
-\item{run_analysis}{Logical; compute ANOVA and related statistics?
-(default = TRUE)}
+\item{show_results}{\code{TRUE} (the default) prints a short summary: the
+targets beside what the data actually have, then the ANOVA table and
+effect sizes. \code{FALSE} prints nothing.}
 }
 \value{
-A list with:
-\item{data}{Primary data frame (per \code{output_format})}
-\item{data_wide}{Wide-format data (if \code{output_format} is
-\code{"wide"} or \code{"both"})}
-\item{data_long}{Long-format data (if \code{output_format} is
-\code{"long"} or \code{"both"})}
-\item{group_stats}{Descriptive statistics for each group}
-\item{iterations}{Iteration counts per group}
-\item{anova_table}{ANOVA source table (if \code{run_analysis = TRUE})}
-\item{effect_sizes}{eta², partial eta², omega², partial omega²}
-\item{assumptions}{Levene's test and Shapiro-Wilk results}
-\item{posthoc_fisher}{Fisher's LSD pairwise comparisons}
-\item{posthoc_tukey}{Tukey's HSD pairwise comparisons}
+A data frame, returned invisibly: in long layout, one row per
+observation and two columns (\code{group} and the measured variable); in
+wide layout, one column per group. The summary is stored inside it;
+see it again with \code{\link[=dgen_results]{dgen_results()}}.
 }
 \description{
-Creates data for a one-way ANOVA design with \code{k} groups, each having
-exact specified means and standard deviations. Uses iterative refinement for
-precision. Automatically computes the ANOVA table, effect sizes, assumption
-checks, and post-hoc tests when \code{run_analysis = TRUE}.
+Creates two or more independent groups, each with exactly the mean and
+standard deviation you choose, and runs the one-way analysis of variance.
+}
+\details{
+\strong{What is exact.} The mean and SD of each group, rounded to
+\code{decimals + 1} places, equal \code{m} and \code{sd}. The sums of squares, F, the
+p-value and the effect sizes are calculated from the data and shown in
+the summary; they are not targets.
+
+\strong{Effect sizes.} Eta squared is the between-groups sum of squares
+divided by the total sum of squares: the share of the variation in the
+data that lies between the group means. Omega squared is a less
+optimistic estimate of the same share in the population.
+
+\strong{Limits.} The data are bell-shaped, with no minimum or maximum. When a
+request cannot be met, the function stops and says why; in rare cases
+that can take several seconds.
+
+With two groups, F equals the square of the equal-variances t from
+\code{\link[=t_indep_gen]{t_indep_gen()}}.
 }
 \examples{
-result <- anova_gen(
-  k = 3, n = 30,
-  means = c(50, 55, 60), sds = c(10, 10, 10),
-  labels = c("Control", "Low", "High"),
-  dv_name = "Score"
-)
-result$anova_table
-result$posthoc_tukey
+sales <- anova_gen(n = 12, m = c(70, 75, 82), sd = c(8, 9, 8),
+                   labels = c("North", "South", "West"),
+                   var_name = "sales", decimals = 0, seed = 1)
+summary(aov(sales ~ group, data = sales))
+
+# One column per region, for the Excel Data Analysis ToolPak
+wide <- anova_gen(n = 12, m = c(70, 75, 82), sd = c(8, 9, 8),
+                  labels = c("North", "South", "West"), layout = "wide",
+                  decimals = 0, seed = 1, show_results = FALSE)
+head(wide)
 
 }

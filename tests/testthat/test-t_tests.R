@@ -126,6 +126,26 @@ test_that("t_indep_gen: a typed-in d is exact to 2 decimals", {
   }
 })
 
+test_that("t_indep_gen: wide layout gives one exact column per group", {
+  wide <- t_indep_gen(n1 = 25, n2 = 25, m = c(72, 78), sd = c(9, 10),
+                      labels = c("Online", "Classroom"), layout = "wide",
+                      decimals = 0, seed = 1, show_results = FALSE)
+  expect_equal(dim(wide), c(25, 2))
+  expect_named(wide, c("Online", "Classroom"))
+  expect_equal(colMeans(wide), c(Online = 72, Classroom = 78))
+  long <- t_indep_gen(n1 = 25, n2 = 25, m = c(72, 78), sd = c(9, 10),
+                      labels = c("Online", "Classroom"), decimals = 0,
+                      seed = 1, show_results = FALSE)
+  expect_equal(unlist(wide, use.names = FALSE), long$x)
+
+  uneven <- t_indep_gen(n1 = 12, n2 = 15, m = c(72, 78), sd = c(9, 10),
+                        layout = "wide", decimals = 0, seed = 1,
+                        show_results = FALSE)
+  expect_equal(colSums(!is.na(uneven)), c("Group 1" = 12, "Group 2" = 15))
+  expect_error(t_indep_gen(25, m = c(72, 78), sd = c(9, 10), layout = "both"),
+               "layout must be")
+})
+
 test_that("t_indep_gen: the summary shows both t tests R would give", {
   shown <- capture.output(
     data <- t_indep_gen(n1 = 25, n2 = 25, m = c(72, 78), sd = c(9, 10),

@@ -38,13 +38,34 @@ need_numbers <- function(x, how_many, setting, example) {
   }
 }
 
+# One row per observation with a group column ("long"), or one column per
+# group ("wide", the layout Excel's Data Analysis ToolPak needs). In wide
+# layout, shorter groups are padded with NA so the columns line up.
+arrange_groups <- function(groups, labels, name, layout) {
+  if (!is.character(layout) || length(layout) != 1 ||
+      !(layout %in% c("long", "wide"))) {
+    stop("layout must be \"long\" (one row per observation) or \"wide\" ",
+         "(one column per group).", call. = FALSE)
+  }
+  if (layout == "wide") {
+    longest <- max(lengths(groups))
+    padded  <- lapply(groups, function(values) values[seq_len(longest)])
+    return(data.frame(stats::setNames(padded, labels), check.names = FALSE))
+  }
+  data <- data.frame(group = factor(rep(labels, lengths(groups)),
+                                    levels = labels),
+                     values = unlist(groups))
+  stats::setNames(data, c("group", name))
+}
+
 data_note <- function(data, decimals) {
   paste0(nrow(data), " rows, ", ncol(data),
          if (ncol(data) == 1) " column (" else " columns (",
          paste(names(data), collapse = ", "), "). ",
          if (decimals == 0) "Whole numbers."
          else paste0("Rounded to ", decimals, " decimal place",
-                     if (decimals > 1) "s", "."))
+                     if (decimals > 1) "s", "."),
+         if (anyNA(data)) " Shorter groups end with empty (NA) cells.")
 }
 
 # p-values the way textbooks print them: .031, or < .001

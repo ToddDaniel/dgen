@@ -12,6 +12,7 @@ t_indep_gen(
   d = NULL,
   labels = c("Group 1", "Group 2"),
   var_name = "x",
+  layout = "long",
   decimals = 2,
   seed = NULL,
   export_csv = FALSE,
@@ -34,7 +35,13 @@ the second group's mean.}
 \item{labels}{Names of the two groups, in quotes.}
 
 \item{var_name}{Name for the measured variable, in quotes. The default is
-\code{"x"}.}
+\code{"x"}. Not used in wide layout, where the columns are named by \code{labels}.}
+
+\item{layout}{\code{"long"} (the default) gives one row per observation, with
+a \code{group} column and a column for the measured variable. \code{"wide"} gives
+one column per group, the layout the Excel Data Analysis ToolPak needs;
+if the groups differ in size, the shorter column ends with empty (\code{NA})
+cells.}
 
 \item{decimals}{Number of decimal places in the data. Use \code{0} for whole
 numbers.}
@@ -52,8 +59,9 @@ targets beside what the data actually have, then the t test. \code{FALSE}
 prints nothing.}
 }
 \value{
-A data frame with \code{n1 + n2} rows and two columns, \code{group} and the
-measured variable, returned invisibly. The summary is stored inside it;
+A data frame, returned invisibly: in long layout, \code{n1 + n2} rows
+and two columns (\code{group} and the measured variable); in wide layout, one
+column per group. The summary is stored inside it;
 see it again with \code{\link[=dgen_results]{dgen_results()}}.
 }
 \description{
@@ -87,6 +95,12 @@ scores <- t_indep_gen(n1 = 25, n2 = 25, m = c(72, 78), sd = c(9, 10),
                       labels = c("Online", "Classroom"),
                       var_name = "score", decimals = 0, seed = 1)
 t.test(score ~ group, data = scores, var.equal = TRUE)
+
+# One column per group, for the Excel Data Analysis ToolPak
+wide <- t_indep_gen(n1 = 25, n2 = 25, m = c(72, 78), sd = c(9, 10),
+                    labels = c("Online", "Classroom"), layout = "wide",
+                    decimals = 0, seed = 1, show_results = FALSE)
+head(wide)
 
 # The same design from an effect size: Classroom is 0.6 pooled SDs higher
 scores <- t_indep_gen(n1 = 25, n2 = 25, m = 72, sd = c(9, 10), d = 0.6,

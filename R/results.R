@@ -83,7 +83,9 @@ compare_table <- function(labels, columns, target_mean, target_sd, decimals) {
 
 # export_csv = FALSE writes nothing; TRUE writes "<function name>.csv" in the
 # working directory; a file name writes that file. An existing file is never
-# replaced: the new one gets _2, _3, ... added to its name.
+# replaced: the new one gets _2, _3, ... added to its name. Missing values
+# (the padding under shorter groups in wide layout) are left as empty cells,
+# which is what Excel expects.
 save_csv <- function(data, export_csv, function_name) {
   if (isFALSE(export_csv)) return(invisible(NULL))
 
@@ -101,7 +103,7 @@ save_csv <- function(data, export_csv, function_name) {
   }
 
   file <- unused_file_name(file)
-  utils::write.csv(data, file, row.names = FALSE)
+  utils::write.csv(data, file, row.names = FALSE, na = "")
   message("Saved: ", normalizePath(file))
   invisible(file)
 }

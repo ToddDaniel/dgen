@@ -45,8 +45,8 @@
 #'   `c("hours", "exam")`. The default is `"x"` and `"y"` (or `"x1"`,
 #'   `"x2"`, ... for three or more).
 #' @param show_results `TRUE` (the default) prints a short summary: the
-#'   targets beside what the data actually have, and the test of each
-#'   correlation. `FALSE` prints nothing.
+#'   targets beside what the data actually have, then each correlation
+#'   with r squared and its test. `FALSE` prints nothing.
 #'
 #' @return A data frame with `n` rows and one column per variable, returned
 #'   invisibly. The summary is stored inside it; see it again with
@@ -107,7 +107,7 @@ cor_gen <- function(n, m, sd, r, decimals = 2, var_name = NULL, seed = NULL,
 }
 
 # One row per pair of variables: the target correlation, the correlation in
-# the data, and the usual t test of that correlation.
+# the data, r squared (the effect size), and the usual t test of r.
 correlation_table <- function(data, target_r) {
   pairs <- which(upper.tri(target_r), arr.ind = TRUE)
   rows  <- lapply(seq_len(nrow(pairs)), function(pair) {
@@ -117,6 +117,7 @@ correlation_table <- function(data, target_r) {
     data.frame(
       "r (target)" = show_number(target_r[first, second], 2),
       "r (data)"   = show_number(unname(test$estimate), 2),
+      "r squared"  = show_number(unname(test$estimate)^2, 2),
       "t"          = show_number(unname(test$statistic), 2),
       "df"         = unname(test$parameter),
       "p"          = show_p(test$p.value),

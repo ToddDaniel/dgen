@@ -40,13 +40,19 @@
 #'   the second group's mean.
 #' @param labels Names of the two groups, in quotes.
 #' @param var_name Name for the measured variable, in quotes. The default is
-#'   `"x"`.
+#'   `"x"`. Not used in wide layout, where the columns are named by `labels`.
+#' @param layout `"long"` (the default) gives one row per observation, with
+#'   a `group` column and a column for the measured variable. `"wide"` gives
+#'   one column per group, the layout the Excel Data Analysis ToolPak needs;
+#'   if the groups differ in size, the shorter column ends with empty (`NA`)
+#'   cells.
 #' @param show_results `TRUE` (the default) prints a short summary: the
 #'   targets beside what the data actually have, then the t test. `FALSE`
 #'   prints nothing.
 #'
-#' @return A data frame with `n1 + n2` rows and two columns, `group` and the
-#'   measured variable, returned invisibly. The summary is stored inside it;
+#' @return A data frame, returned invisibly: in long layout, `n1 + n2` rows
+#'   and two columns (`group` and the measured variable); in wide layout, one
+#'   column per group. The summary is stored inside it;
 #'   see it again with [dgen_results()].
 #'
 #' @examples
@@ -54,6 +60,12 @@
 #'                       labels = c("Online", "Classroom"),
 #'                       var_name = "score", decimals = 0, seed = 1)
 #' t.test(score ~ group, data = scores, var.equal = TRUE)
+#'
+#' # One column per group, for the Excel Data Analysis ToolPak
+#' wide <- t_indep_gen(n1 = 25, n2 = 25, m = c(72, 78), sd = c(9, 10),
+#'                     labels = c("Online", "Classroom"), layout = "wide",
+#'                     decimals = 0, seed = 1, show_results = FALSE)
+#' head(wide)
 #'
 #' # The same design from an effect size: Classroom is 0.6 pooled SDs higher
 #' scores <- t_indep_gen(n1 = 25, n2 = 25, m = 72, sd = c(9, 10), d = 0.6,
@@ -63,8 +75,8 @@
 #' @export
 t_indep_gen <- function(n1, n2 = n1, m, sd, d = NULL,
                         labels = c("Group 1", "Group 2"), var_name = "x",
-                        decimals = 2, seed = NULL, export_csv = FALSE,
-                        show_results = TRUE) {
+                        layout = "long", decimals = 2, seed = NULL,
+                        export_csv = FALSE, show_results = TRUE) {
 
   # 1. Check inputs; with d, work out the second mean it stands for
   if (missing(n1) || missing(m) || missing(sd)) {
@@ -98,9 +110,7 @@ t_indep_gen <- function(n1, n2 = n1, m, sd, d = NULL,
     c(n1, n2), m, sd, decimals, derived_means = !is.null(d),
     also_check = if (!is.null(d)) function(groups) reports_as(cohens_d(groups), d)
   )
-  data <- data.frame(group = factor(rep(labels, c(n1, n2)), levels = labels),
-                     values = unlist(groups))
-  names(data)[2] <- name
+  data <- arrange_groups(groups, labels, name, layout)
 
   # 3. Run the tests, assemble the summary and hand everything back
   pooled <- stats::t.test(groups[[2]], groups[[1]], var.equal = TRUE)

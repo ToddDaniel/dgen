@@ -27,7 +27,7 @@
 #'
 #' @section ANOVA family:
 #' \describe{
-#'   \item{\code{\link{anova_gen}}}{One-way ANOVA data}
+#'   \item{\code{\link{anova_gen}}}{One-way ANOVA}
 #' }
 #'
 #' @section Chi-square family:
@@ -49,8 +49,6 @@
 #'
 #' @section Effect-size helpers:
 #' \describe{
-#'   \item{\code{\link{f_to_means}}}{Cohen's f (or eta-squared) to target
-#'     group means for ANOVA}
 #'   \item{\code{\link{h_to_prop}}}{Cohen's h to a second target proportion}
 #' }
 #'

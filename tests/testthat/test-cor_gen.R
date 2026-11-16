@@ -87,6 +87,9 @@ test_that("show_results prints each correlation with its test", {
   pairs <- correlation_table(data, matrix(c(1, 0.55, 0.55, 1), 2))
   expect_equal(pairs$t, show_number(unname(test$statistic), 2))
   expect_equal(pairs$df, 38)
+  expect_equal(pairs[["r squared"]],
+               show_number(stats::cor(data$hours, data$exam)^2, 2))
+  expect_true(any(grepl("r squared", shown)))
   expect_equal(pairs$p, "< .001")
   expect_equal(show_p(c(0.0312, 0.5, 0.0004)), c(".031", ".500", "< .001"))
 })

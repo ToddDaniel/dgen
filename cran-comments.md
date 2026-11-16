@@ -5,14 +5,23 @@ This is a new submission.
 ## Test environments
 
 - Local: macOS 15.7 (Sequoia), R 4.6.1, aarch64-apple-darwin
-- win-builder (R-devel): to be run before submission
-- mac-builder (R-release): to be run before submission
+- win-builder: Windows Server 2022 x64, R-devel (2026-11-14 r90890 ucrt)
+
+mac-builder could not be used: its upload service returned "502 Bad
+Gateway" on every attempt. The package has no compiled code, and the local
+check above was run on macOS (Apple silicon).
 
 ## R CMD check results
 
 Local, `R CMD check --as-cran`: 0 errors | 0 warnings | 0 notes
 
-A "New submission" note is expected on CRAN's incoming checks.
+win-builder (R-devel): 0 errors | 0 warnings | 1 note
+
+    * checking CRAN incoming feasibility ... NOTE
+    Maintainer: 'Todd Daniel <ToddDaniel@missouristate.edu>'
+    New submission
+
+This is the only note; it is expected for a first submission.
 
 ## Downstream dependencies
 

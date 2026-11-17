@@ -1,0 +1,319 @@
+---
+title: "Getting started with dgen"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Getting started with dgen}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(collapse = FALSE, comment = "")
+```
+
+dgen makes classroom datasets whose statistics come out to the numbers you
+choose. You decide what the answer key should say; dgen builds data that give
+that answer.
+
+This guide is for instructors who do not program. Each section is a classroom
+situation, the one line you type, and what comes back.
+
+```{r}
+library(dgen)
+```
+
+## The pattern
+
+Every dgen function works the same way.
+
+1. You type the numbers you want: a sample size, and then means, standard
+   deviations, correlations or counts.
+2. dgen prints a short summary. It shows your targets beside what the data
+   actually have, then the test the function is named for and an effect
+   size.
+3. The data come back as an ordinary table. Give it a name with `<-` so you
+   can use it afterwards.
+
+A few settings mean the same thing everywhere:
+
+| Setting | What it does |
+|---|---|
+| `decimals` | How many decimal places the data have. Use `0` for whole numbers. |
+| `seed` | Any whole number. The same seed always gives the same data, so you can recreate a dataset later. |
+| `var_name`, `labels` | Names for the variables and the groups. |
+| `export_csv` | Saves the data as a file. |
+| `show_results` | Set it to `FALSE` to skip the printed summary. |
+
+## A variable with a mean and standard deviation you choose
+
+*You want thirty exam scores for a descriptive statistics exercise, with a
+mean of 75.4 and a standard deviation of 8.2.*
+
+```{r}
+scores <- dgen(n = 30, m = 75.4, sd = 8.2, decimals = 1,
+               var_name = "score", seed = 1)
+```
+
+The summary shows the targets and what the data have. The data themselves are
+in `scores`:
+
+```{r}
+head(scores)
+mean(scores$score)
+sd(scores$score)
+```
+
+To look at all of the data in a spreadsheet-style window, type
+`View(scores)` in RStudio (with a capital V).
+
+A student who computes the mean and standard deviation gets 75.4 and 8.2.
+
+## t tests
+
+### One sample
+
+*A pizza chain promises delivery in 30 minutes. You want a sample of 25
+deliveries averaging 32.4 minutes, to test against 30.*
+
+```{r}
+times <- t_one_gen(n = 25, m = 32.4, sd = 5.5, test_value = 30,
+                   decimals = 1, var_name = "minutes", seed = 1)
+```
+
+The summary is your answer key: t, the p-value, the confidence interval and
+Cohen's d. If the p-value is not what you want for the exercise, change the
+mean or the standard deviation and run the line again.
+
+### Two independent groups
+
+*Two sections of a course, one online and one in the classroom.*
+
+```{r}
+exam <- t_indep_gen(n1 = 25, n2 = 25, m = c(72, 78), sd = c(9, 10),
+                    labels = c("Online", "Classroom"),
+                    var_name = "score", decimals = 0, seed = 1)
+head(exam)
+```
+
+Differences are always the first group minus the second, the way Excel's
+Data Analysis ToolPak (Variable 1 minus Variable 2) and R subtract. Here that
+is Online minus Classroom, so the difference, t, the confidence interval and
+Cohen's d are negative, and the summary names the direction. If you would
+rather see positive numbers, list the group with the higher mean first.
+
+If a student's software shows the opposite sign, it listed the groups in the
+other order. A CSV file does not carry the order of the groups, and some
+programs sort group names alphabetically (Classroom before Online). The size
+of t and the p-value are the same either way.
+
+You can also describe the design by its effect size. Give the first group's
+mean and Cohen's d, and dgen works out the second mean. Cohen's d is also
+first minus second: a positive d makes the first group higher, and a
+negative d makes the second group higher.
+
+```{r}
+exam_d <- t_indep_gen(n1 = 25, n2 = 25, m = 72, sd = c(9, 10), d = -0.6,
+                      labels = c("Online", "Classroom"),
+                      var_name = "score", decimals = 0, seed = 1)
+```
+
+### The same people measured twice
+
+*Thirty employees take a skills test before and after training.*
+
+```{r}
+training <- t_paired_gen(n = 30, m = c(50, 55), sd = c(10, 10), r = 0.7,
+                         var_name = c("before", "after"), decimals = 1,
+                         seed = 1)
+head(training)
+```
+
+A paired design needs one more number: how strongly the two measurements are
+related. The higher that correlation, the smaller the spread of the
+differences and the larger t becomes. Differences are the first measurement
+minus the second (here before minus after), as in Excel's paired t test.
+
+## ANOVA
+
+*Sales in three regions, twelve stores each.*
+
+```{r}
+sales <- anova_gen(n = 12, m = c(70, 75, 82), sd = c(8, 9, 8),
+                   labels = c("North", "South", "West"),
+                   var_name = "sales", decimals = 0, seed = 1)
+```
+
+### For Excel's Data Analysis ToolPak
+
+Excel's "Anova: Single Factor" and two-sample t-test tools want one column
+per group. Ask for the wide layout:
+
+```{r}
+sales_wide <- anova_gen(n = 12, m = c(70, 75, 82), sd = c(8, 9, 8),
+                        labels = c("North", "South", "West"),
+                        layout = "wide", decimals = 0, seed = 1,
+                        show_results = FALSE)
+head(sales_wide)
+```
+
+`t_indep_gen()` has the same setting.
+
+## Relationships
+
+### Correlation
+
+*Hours studied and exam score for forty students, correlated .55.*
+
+```{r}
+study <- cor_gen(n = 40, m = c(6.5, 78), sd = c(2.1, 9.5), r = 0.55,
+                 var_name = c("hours", "exam"), decimals = 1, seed = 1)
+```
+
+The same data work for simple regression:
+
+```{r}
+coef(lm(exam ~ hours, data = study))
+```
+
+### Regression
+
+*Store sales explained by advertising and price.*
+
+With `reg_gen()` you say how strongly each predictor is related to the
+outcome. List the outcome first, then the predictors.
+
+```{r}
+store <- reg_gen(n = 60, m = c(250, 30, 12), sd = c(40, 8, 3),
+                 r = c(0.45, -0.30),
+                 var_name = c("sales", "advertising", "price"),
+                 decimals = 1, seed = 2)
+```
+
+The predictors are unrelated to each other, so each standardized slope (Beta)
+equals the correlation you typed, and R squared is the sum of the squared
+correlations: here .45 squared plus .30 squared, about .29. With one predictor
+this is simple regression.
+
+## Proportions and chi-square
+
+### One proportion
+
+*Seventy percent of 80 customers say they would recommend the store. Is that
+more than half?*
+
+```{r}
+survey <- prop_one_gen(n = 80, prop = 0.7, test_value = 0.5,
+                       labels = c("Recommend", "Not"), var_name = "answer",
+                       seed = 1)
+head(survey)
+```
+
+Type proportions as decimals: 0.7, not 70.
+
+### Two proportions
+
+*A website tests a new layout. Did a larger share of visitors buy something?*
+
+```{r}
+visits <- prop_two_gen(n1 = 120, n2 = 150, prop = c(0.25, 0.42),
+                       labels = c("Old layout", "New layout"),
+                       var_name = "bought", seed = 1)
+```
+
+Here too the difference is the first group minus the second.
+
+### Chi-square
+
+Chi-square problems are written with counts, so that is what you type.
+
+*Eighty viewers chose between two endings of a film.*
+
+```{r}
+endings <- chisq_gen(counts = c(Happy = 56, Tragic = 24),
+                     expected = c(0.5, 0.5), var_name = "ending", seed = 1)
+```
+
+For a test of independence, give a table of counts. `matrix()` builds the
+table; `byrow = TRUE` lets you type it row by row, the way it reads.
+
+```{r}
+results <- matrix(c(30, 10,
+                    20, 40), nrow = 2, byrow = TRUE,
+                  dimnames = list(c("Online", "Classroom"),
+                                  c("Pass", "Fail")))
+course <- chisq_gen(counts = results, var_name = c("mode", "result"),
+                    seed = 2)
+head(course)
+```
+
+The proportion and chi-square tests in the summaries are the textbook
+versions, so they match a calculation by hand, Excel and JASP. R's own
+`chisq.test()` and `prop.test()` adjust a 2 x 2 table slightly unless you add
+`correct = FALSE`.
+
+## Saving the data and seeing the results again
+
+To save a dataset as a file you can open in Excel or give to students, add
+`export_csv`:
+
+```{r, eval = FALSE}
+scores <- dgen(n = 30, m = 75.4, sd = 8.2, export_csv = "exam_scores.csv")
+```
+
+The file goes in R's working folder, and dgen prints the full location
+("Saved: ...") so you can find it. Type `getwd()` to see which folder that
+is; in RStudio, Session > Set Working Directory changes it. `export_csv =
+TRUE` names the file after the function instead. dgen never replaces a file
+that already exists; it adds a number to the new name.
+
+To see a summary again:
+
+```{r}
+dgen_results(scores)
+```
+
+## What "exact" means
+
+**Means and standard deviations.** The mean and standard deviation of the
+data, rounded to one more decimal place than the data, equal your targets.
+With `decimals = 1`, a target mean of 75.4 gives data whose mean is reported
+as 75.40.
+
+**Standard deviations are sample standard deviations**, the kind with n - 1
+in the denominator. In Excel that is `STDEV.S`.
+
+**Correlations** match to 2 decimal places. **Counts** match exactly.
+
+**Everything else is reported, not promised.** The t statistic, F, p-values,
+slopes and effect sizes are calculated from the data and shown in the
+summary. They sit very close to what your targets imply, but take the answer
+key from the summary.
+
+## Limits
+
+**No minimum or maximum.** The data are bell-shaped and can run past sensible
+bounds: a negative price, or a 6 on a five-point scale. The Smallest and
+Largest columns of the summary show you at a glance.
+
+**Some requests are impossible.** Five whole numbers cannot have a mean of
+75.5. dgen stops and names the nearest values that work:
+
+```{r, error = TRUE}
+dgen(n = 5, m = 75.5, sd = 8.2, decimals = 0)
+```
+
+**Coarse rounding is harder.** Whole-number data with small standard
+deviations and several correlated variables may not be achievable. Using more
+decimals or a larger sample usually solves it. Once in a while a very
+demanding request takes several seconds before dgen reports that it cannot be
+met.
+
+## Where dgen comes from
+
+dgen was inspired by MorseGen, written by Brendan Morse, whose two functions
+generated a variable with an exact mean and standard deviation and a pair of
+variables with an exact correlation.
+
+Morse, B. J. (2012). *MorseGen: Simple raw data generator based on
+user-specified summary statistics* (R package version 1.2).
+<https://vc.bridgew.edu/fac_articles/1/>

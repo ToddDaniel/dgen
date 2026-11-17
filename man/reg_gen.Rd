@@ -2,106 +2,102 @@
 % Please edit documentation in R/reg_gen.R
 \name{reg_gen}
 \alias{reg_gen}
-\title{Generate Outcome Variable from Regression Model}
+\title{Generate data for linear regression}
 \usage{
 reg_gen(
-  predictors,
-  betas,
-  outcome_name = "Y",
-  outcome_type = "continuous",
-  r_squared = 0.5,
-  residual_sd = NULL,
-  prevalence = 0.5,
+  n,
+  m,
+  sd,
+  r,
   decimals = 2,
+  var_name = NULL,
   seed = NULL,
   export_csv = FALSE,
-  run_analysis = TRUE
+  show_results = TRUE
 )
 }
 \arguments{
-\item{predictors}{Data frame of predictor variables. Column names must
-match the names in \code{betas} (excluding \code{"intercept"}).}
+\item{n}{Sample size: the number of rows.}
 
-\item{betas}{Named numeric vector of regression coefficients. Must include
-\code{"intercept"} plus names matching predictor columns.
-Example: \code{c(intercept = 10, X1 = 0.5, X2 = 0.3)}}
+\item{m}{Target means: the outcome first, then each predictor.}
 
-\item{outcome_name}{Name for the outcome variable (default = \code{"Y"})}
+\item{sd}{Target standard deviations, in the same order.}
 
-\item{outcome_type}{\code{"continuous"} or \code{"binary"}
-(default = \code{"continuous"})}
+\item{r}{Target correlation of each predictor with the outcome, such as
+\code{0.6} for one predictor or \code{c(0.45, 0.10)} for two.}
 
-\item{r_squared}{Target R-squared for continuous outcomes (0 to 1,
-default = 0.50)}
+\item{decimals}{Number of decimal places in the data. Use \code{0} for whole
+numbers.}
 
-\item{residual_sd}{Optional direct specification of residual SD for
-continuous outcomes; overrides \code{r_squared} if provided}
+\item{var_name}{Names for the variables, in quotes: the outcome first,
+then each predictor. The default is \code{"y"}, \code{"x1"}, \code{"x2"}, ...}
 
-\item{prevalence}{Target proportion of 1s for binary outcomes (0 < p < 1,
-default = 0.5)}
+\item{seed}{A whole number that makes the data reproducible: the same
+seed gives the same data. Leave it out for different data each time.}
 
-\item{decimals}{Number of decimal places for continuous outcomes
-(default = 2)}
+\item{export_csv}{\code{FALSE} (the default) saves nothing. \code{TRUE} saves the
+data as a CSV file named after the function, in the working directory.
+A file name in quotes, such as \code{"exam.csv"}, saves to that file. An
+existing file is never replaced; a number is added to the new name.}
 
-\item{seed}{Integer seed for reproducibility (default = \code{NULL})}
-
-\item{export_csv}{Either \code{FALSE} (default; nothing is written),
-\code{TRUE} (write a CSV with an auto-generated name to the current
-working directory), or a file path giving the CSV destination}
-
-\item{run_analysis}{Logical; run regression automatically?
-(default = \code{TRUE})}
+\item{show_results}{\code{TRUE} (the default) prints a short summary: the
+targets beside what the data actually have, then the regression.
+\code{FALSE} prints nothing.}
 }
 \value{
-A list with:
-\item{data}{Data frame with predictors and generated outcome}
-\item{betas_target}{Named vector of target beta coefficients}
-\item{betas_achieved}{Coefficients from fitted regression model}
-\item{outcome_stats}{Outcome summary statistics}
-\item{model_fit}{R-squared, residual SD, and related fit statistics}
-\item{regression_results}{Full \code{lm} or \code{glm} summary}
-\item{residuals}{Model residuals}
-\item{fitted_values}{Predicted values from the fitted model}
-\item{assumptions}{Assumption checks}
+A data frame with \code{n} rows and one column per variable (the
+outcome first), returned invisibly. The summary is stored inside it;
+see it again with \code{\link[=dgen_results]{dgen_results()}}.
 }
 \description{
-Creates an outcome variable based on specified predictors and beta
-coefficients. Supports both continuous and binary outcomes with precise
-control over effect sizes. Optionally runs the regression automatically
-and reports full results.
+Creates an outcome and one or more predictors with exactly the means,
+standard deviations and correlations with the outcome that you choose,
+and runs the regression. With one predictor it is simple linear
+regression; with several, multiple regression.
 }
 \details{
-Uses matrix multiplication: \code{Y_hat = X \%*\% beta}.
+\strong{How to describe the design.} Say how strongly each predictor is
+related to the outcome: setting \code{r} to \code{c(0.45, 0.10)} means the first
+predictor correlates .45 with the outcome and the second .10. The
+predictors are
+made uncorrelated with one another, so each one's standardized slope
+(beta) is its own \code{r}, and R squared is the sum of the squared \code{r}
+values. For that reason the squared \code{r} values must add up to less
+than 1.
 
-For continuous outcomes the residual variance is derived from
-\code{r_squared}: \code{Var(res) = Var(Y_hat) * (1 - R2) / R2}.
+\strong{Order.} \code{m}, \code{sd} and \code{var_name} list the outcome first and then the
+predictors, the way articles lay out correlation tables.
 
-For binary outcomes a latent variable approach is used: the latent score is
-standardised, Gaussian noise is added, and a threshold based on
-\code{prevalence} is applied.
+\strong{What is exact.} The mean and SD of every variable, rounded to
+\code{decimals + 1} places, equal \code{m} and \code{sd}. SDs are sample SDs (\code{n - 1}
+in the denominator; Excel's \code{STDEV.S}). Each predictor's correlation
+with the outcome, rounded to 2 decimal places, equals \code{r}, and the
+correlations among the predictors round to 0.00. The slopes, their
+standard errors and tests, the standardized betas, F, R squared and
+adjusted R squared are calculated from the data and shown in the
+summary; they are not targets.
+
+\strong{Limits.} The data are bell-shaped, with no minimum or maximum. Coarse
+rounding makes exact correlations harder: with whole numbers, small SDs
+and several predictors, use more decimals or a larger \code{n}. When a request
+cannot be met, the function stops and says why; in rare cases that can
+take several seconds.
+
+For predictors that are correlated with one another, or to recreate a
+published regression from its correlation table, use \code{\link[=cor_gen]{cor_gen()}} with a
+correlation table and run \code{lm()} on the result.
 }
 \examples{
-preds <- make_predictors(n = 250,
-  FP = c(m = 2.8, sd = 0.9),
-  MD = c(m = 2.6, sd = 0.85),
-  correlations = list("FP-MD" = 0.40),
-  seed = 42)
+# Simple regression: sales on advertising
+ads <- reg_gen(n = 40, m = c(250, 30), sd = c(40, 8), r = 0.6,
+               var_name = c("sales", "advertising"), decimals = 1,
+               seed = 1)
+coef(lm(sales ~ advertising, data = ads))
 
-# Continuous outcome
-result <- reg_gen(
-  predictors   = preds$data,
-  betas        = c(intercept = 10.5, FP = 0.20, MD = 0.48),
-  outcome_name = "FS_log",
-  r_squared    = 0.50
-)
-
-# Binary outcome
-fraud <- reg_gen(
-  predictors   = preds$data,
-  betas        = c(intercept = -1, FP = 0.5, MD = 0.8),
-  outcome_name = "Fraud",
-  outcome_type = "binary",
-  prevalence   = 0.3
-)
+# Multiple regression: two predictors
+store <- reg_gen(n = 60, m = c(250, 30, 12), sd = c(40, 8, 3),
+                 r = c(0.45, -0.30),
+                 var_name = c("sales", "advertising", "price"),
+                 decimals = 1, seed = 2)
 
 }

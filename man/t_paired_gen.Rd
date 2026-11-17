@@ -2,94 +2,104 @@
 % Please edit documentation in R/t_paired_gen.R
 \name{t_paired_gen}
 \alias{t_paired_gen}
-\title{Generate Data for a Paired Samples T-Test}
+\title{Generate data for a paired t test}
 \usage{
 t_paired_gen(
   n,
-  measure1_mean,
-  measure1_sd,
-  measure1_label = "Measure1",
-  measure2_mean,
-  measure2_sd,
-  measure2_label = "Measure2",
-  correlation = 0.7,
-  var_name = "Score",
-  measure_name = "Measurement",
-  id_name = "ID",
-  output_format = "wide",
+  m,
+  sd,
+  r,
+  d = NULL,
   decimals = 2,
+  var_name = NULL,
   seed = NULL,
   export_csv = FALSE,
-  run_analysis = TRUE
+  show_results = TRUE
 )
 }
 \arguments{
-\item{n}{Number of participants (pairs)}
+\item{n}{Number of people (pairs of measurements).}
 
-\item{measure1_mean}{Mean for Measurement 1}
+\item{m}{Target means of the two measurements, such as \code{c(50, 55)}. If
+you give \code{d}, give only the first mean.}
 
-\item{measure1_sd}{Standard deviation for Measurement 1}
+\item{sd}{Target standard deviations of the two measurements.}
 
-\item{measure1_label}{Label for Measurement 1 (default = \code{"Measure1"})}
+\item{r}{Target correlation between the two measurements, such as \code{0.7}.}
 
-\item{measure2_mean}{Mean for Measurement 2}
+\item{d}{Target Cohen's d, to 2 decimal places, as another way of setting
+the second mean.}
 
-\item{measure2_sd}{Standard deviation for Measurement 2}
+\item{decimals}{Number of decimal places in the data. Use \code{0} for whole
+numbers.}
 
-\item{measure2_label}{Label for Measurement 2 (default = \code{"Measure2"})}
+\item{var_name}{Names for the two measurements, in quotes. The default is
+\code{c("time1", "time2")}.}
 
-\item{correlation}{Target within-person correlation (default = 0.70)}
+\item{seed}{A whole number that makes the data reproducible: the same
+seed gives the same data. Leave it out for different data each time.}
 
-\item{var_name}{Name for the measured variable (default = \code{"Score"})}
+\item{export_csv}{\code{FALSE} (the default) saves nothing. \code{TRUE} saves the
+data as a CSV file named after the function, in the working directory.
+A file name in quotes, such as \code{"exam.csv"}, saves to that file. An
+existing file is never replaced; a number is added to the new name.}
 
-\item{measure_name}{Name for the measurement grouping variable in long
-format (default = \code{"Measurement"})}
-
-\item{id_name}{Name for the participant ID variable (default = \code{"ID"})}
-
-\item{output_format}{One of \code{"wide"}, \code{"long"}, or \code{"both"}
-(default = \code{"wide"})}
-
-\item{decimals}{Number of decimal places for rounding (default = 2)}
-
-\item{seed}{Integer seed for reproducibility (default = NULL)}
-
-\item{export_csv}{Either \code{FALSE} (default; nothing is written),
-\code{TRUE} (write a CSV with an auto-generated name to the current
-working directory), or a file path giving the CSV destination.
-When \code{output_format = "both"} and a file path is supplied,
-\code{_wide}/\code{_long} is inserted before the extension}
-
-\item{run_analysis}{Logical; run the paired t-test automatically?
-(default = TRUE)}
+\item{show_results}{\code{TRUE} (the default) prints a short summary: the
+targets beside what the data actually have, then the t test. \code{FALSE}
+prints nothing.}
 }
 \value{
-A list with:
-\item{data}{Primary data frame (wide or long, per \code{output_format})}
-\item{data_wide}{Wide-format data frame (one row per participant)}
-\item{data_long}{Long-format data frame (one row per measurement)}
-\item{measure1_stats}{Descriptive statistics for Measurement 1}
-\item{measure2_stats}{Descriptive statistics for Measurement 2}
-\item{difference_stats}{Statistics for the difference scores}
-\item{correlation_achieved}{Achieved within-person correlation}
-\item{cohens_d_paired}{Paired Cohen's d}
-\item{cohens_d_corrected}{Correlation-corrected Cohen's d}
-\item{iterations}{Number of iterations required}
-\item{t_test_results}{Paired t-test result (if \code{run_analysis = TRUE})}
+A data frame with \code{n} rows (one per person) and two columns (one
+per measurement), returned invisibly. The summary is stored inside it;
+see it again with \code{\link[=dgen_results]{dgen_results()}}.
 }
 \description{
-Creates data for a paired samples t-test with two correlated measurements
-on the same participants. Uses \code{MASS::mvrnorm()} with iterative
-refinement to achieve exact target means, standard deviations, and
-the specified within-person correlation.
+Creates two measurements on the same people, with exactly the means,
+standard deviations and correlation you choose, and tests the mean
+difference.
+}
+\details{
+\strong{What is exact.} The mean and SD of each measurement, rounded to
+\code{decimals + 1} places, equal \code{m} and \code{sd}, and their correlation, rounded
+to 2 decimal places, equals \code{r}. SDs are sample SDs (\code{n - 1} in the
+denominator; Excel's \code{STDEV.S}). Because both means are exact, so is the
+mean difference. If you give \code{d}, Cohen's d of the returned data, rounded
+to 2 decimal places, equals \code{d}. The SD of the differences, the t
+statistic, the p-value and the confidence interval are calculated from
+the data and shown in the summary; they are not targets.
+
+\strong{Direction.} Differences are always the first measurement minus the
+second: the mean difference, t, the confidence interval and Cohen's d all
+run that way, as they do in the Excel Data Analysis ToolPak (Variable 1
+minus Variable 2). The summary names the direction. If a student's
+software shows the opposite sign, it took the two measurements in the
+other order. The size of t and the p-value are the same either way.
+
+\strong{Why \code{r} matters.} The SD of the differences depends on the
+correlation: the more strongly the two measurements are related, the
+smaller the SD of the differences and the larger t becomes.
+
+\strong{Using \code{d}.} Cohen's d here is the mean difference divided by the SD of
+the differences (t divided by the square root of \code{n}), so a positive \code{d}
+makes the first measurement higher and a negative \code{d} makes the second
+higher. Give the first measurement's mean as \code{m}, and \code{d}; the second
+mean is set to \verb{m - d * SD of differences}, moved to the nearest mean
+that \code{n} rounded values can have.
+
+\strong{Limits.} The data are bell-shaped, with no minimum or maximum. When a
+request cannot be met, the function stops and says why; in rare cases
+that can take several seconds.
 }
 \examples{
-result <- t_paired_gen(
-  n = 30,
-  measure1_mean = 50, measure1_sd = 10, measure1_label = "Pre",
-  measure2_mean = 55, measure2_sd = 10, measure2_label = "Post",
-  correlation = 0.70, var_name = "Test_Score"
-)
-result$t_test_results
+training <- t_paired_gen(n = 30, m = c(50, 55), sd = c(10, 10), r = 0.7,
+                         var_name = c("before", "after"), decimals = 1,
+                         seed = 1)
+t.test(training$before, training$after, paired = TRUE)   # before - after
+
+# The same design from an effect size. d is before minus after, so
+# d = -0.5 puts the "after" scores higher
+training <- t_paired_gen(n = 30, m = 50, sd = c(10, 10), r = 0.7, d = -0.5,
+                         var_name = c("before", "after"), decimals = 1,
+                         seed = 1)
 
 }

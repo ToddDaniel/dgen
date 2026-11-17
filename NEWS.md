@@ -1,66 +1,45 @@
-# dgen 0.1.0
+# dgen 1.0.0
 
-## Initial release
+First release.
 
-19 data-generation functions and 4 effect-size helpers for teaching
-statistics and validating analytical workflows. Each generator uses
-iterative refinement or exact closed-form construction to achieve exact
-target means, standard deviations, correlations, and proportions rather
-than approximations.
+dgen generates classroom datasets whose summary statistics match the targets
+you choose. Means, standard deviations, correlations and counts hold exactly
+in the rounded data students receive.
 
-All generators accept `export_csv = FALSE` (default), `TRUE`
-(auto-generated filename in the working directory), or a file path.
-Console summaries are emitted with `message()` and can be silenced with
-`suppressMessages()`.
+## Functions
 
-### Core generators
-- `stat_gen()` — single continuous variable with exact mean and SD
-- `cor_gen()` — multiple correlated continuous variables
+Each function is named for the test being taught, prints a short summary
+(targets beside what the data actually have, the matching test, and an
+effect size), and returns the data as a plain data frame.
 
-### T-test family
-- `t_onesample_gen()` — one-sample t-test data
-- `t_indep_gen()` — independent samples t-test data (pooled and Welch)
-- `t_paired_gen()` — paired samples t-test data with controlled
-  within-person correlation
+- `dgen()`: one variable, or several independent variables, with an exact
+  mean and standard deviation.
+- `t_one_gen()`, `t_indep_gen()`, `t_paired_gen()`: one-sample,
+  independent-samples and paired t tests. Each accepts Cohen's d in place of
+  a mean.
+- `anova_gen()`: one-way analysis of variance.
+- `cor_gen()`: two variables with an exact correlation, or several variables
+  from a correlation table.
+- `reg_gen()`: simple and multiple linear regression.
+- `prop_one_gen()`, `prop_two_gen()`: one- and two-proportion z tests.
+- `chisq_gen()`: chi-square tests of goodness of fit and independence.
+- `dgen_results()`: shows a data set's summary again.
 
-### ANOVA family
-- `anova_gen()` — one-way ANOVA with post-hoc tests (Fisher LSD,
-  Tukey HSD)
-- `anova_twoway_gen()` — two-way factorial ANOVA with interaction and
-  simple effects
-- `anova_blocked_gen()` — randomized block design ANOVA with
-  within-block correlation control
+## Shared settings
 
-### Chi-square family
-- `chisq_gof_gen()` — chi-square goodness-of-fit data
-- `chisq_indep_gen()` — chi-square test of independence data
-- `chisq_table_gen()` — expands a frequency table to individual
-  observations
+- `decimals` sets the rounding of the data; `seed` makes data reproducible.
+- `export_csv` saves the data to a CSV file and never replaces an existing
+  file.
+- `show_results = FALSE` turns the printed summary off.
+- `layout = "wide"` in `t_indep_gen()` and `anova_gen()` gives one column
+  per group, for the Excel Data Analysis ToolPak.
+- Differences are always the first group (or measurement) minus the second
+  in `t_indep_gen()`, `t_paired_gen()` and `prop_two_gen()`, and every
+  summary names the direction.
 
-### Proportion family
-- `oneprop_gen()` — one-sample proportion test data
-- `twoprop_gen()` — two-sample proportion test data
-- `mcnemar_gen()` — paired proportions (McNemar test) data with exact
-  marginal proportions and controllable discordant pairs
+## What "exact" means
 
-### Regression family
-- `make_predictors()` — multiple predictors (continuous and binary)
-  with optional correlation structure
-- `bin_gen()` — binary variable with controlled point-biserial
-  correlation
-- `reg_gen()` — continuous or binary outcome from specified regression
-  coefficients and target R-squared
-
-### Psychometric scale family
-- `scale_gen()` — multi-item Likert scale with intentional bad items
-  for teaching reliability analysis
-- `item_gen()` — back-solves individual scale items from composite
-  scores
-
-### Effect-size helpers
-- `d_to_means()` — Cohen's d to target means for independent groups
-- `d_to_means_paired()` — paired Cohen's d to target means for repeated
-  measures
-- `f_to_means()` — Cohen's f (or eta-squared) to target group means for
-  one-way ANOVA
-- `h_to_prop()` — Cohen's h to a second target proportion
+The mean and standard deviation of the returned data, rounded to
+`decimals + 1` places, equal the targets. Correlations match to 2 decimal
+places. Counts match exactly. Requests that cannot be met are refused with a
+plain-language message that names the nearest values that can.

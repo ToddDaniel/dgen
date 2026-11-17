@@ -2,81 +2,121 @@
 % Please edit documentation in R/t_indep_gen.R
 \name{t_indep_gen}
 \alias{t_indep_gen}
-\title{Generate Data for an Independent Samples T-Test}
+\title{Generate data for an independent-samples t test}
 \usage{
 t_indep_gen(
   n1,
-  mean1,
-  sd1,
-  label1 = "Group1",
-  n2,
-  mean2,
-  sd2,
-  label2 = "Group2",
-  var_name = "Score",
-  group_name = "Group",
+  n2 = n1,
+  m,
+  sd,
+  d = NULL,
   decimals = 2,
+  labels = NULL,
+  var_name = NULL,
+  layout = "long",
   seed = NULL,
   export_csv = FALSE,
-  run_analysis = TRUE
+  show_results = TRUE
 )
 }
 \arguments{
-\item{n1}{Sample size for Group 1}
+\item{n1, n2}{Sample sizes of the first and second group. \code{n2} is the same
+as \code{n1} unless you say otherwise.}
 
-\item{mean1}{Mean for Group 1}
+\item{m}{Target means of the two groups, such as \code{c(72, 78)}. If you give
+\code{d}, give only the first group's mean.}
 
-\item{sd1}{Standard deviation for Group 1}
+\item{sd}{Target standard deviations of the two groups, such as
+\code{c(9, 10)}.}
 
-\item{label1}{Label for Group 1 (default = \code{"Group1"})}
+\item{d}{Target Cohen's d, to 2 decimal places, as another way of setting
+the second group's mean.}
 
-\item{n2}{Sample size for Group 2}
+\item{decimals}{Number of decimal places in the data. Use \code{0} for whole
+numbers.}
 
-\item{mean2}{Mean for Group 2}
+\item{labels}{Names of the two groups, in quotes, first group first. The
+default is \code{"Group 1"} and \code{"Group 2"}. In long layout the \code{group}
+column keeps the groups in this order.}
 
-\item{sd2}{Standard deviation for Group 2}
+\item{var_name}{Name for the measured variable, in quotes. The default is
+\code{"x"}. Not used in wide layout, where the columns are named by \code{labels}.}
 
-\item{label2}{Label for Group 2 (default = \code{"Group2"})}
+\item{layout}{\code{"long"} (the default) gives one row per observation, with
+a \code{group} column and a column for the measured variable. \code{"wide"} gives
+one column per group, the layout the Excel Data Analysis ToolPak needs;
+if the groups differ in size, the shorter column ends with empty (\code{NA})
+cells.}
 
-\item{var_name}{Name for the continuous outcome variable (default =
-\code{"Score"})}
+\item{seed}{A whole number that makes the data reproducible: the same
+seed gives the same data. Leave it out for different data each time.}
 
-\item{group_name}{Name for the grouping variable (default = \code{"Group"})}
+\item{export_csv}{\code{FALSE} (the default) saves nothing. \code{TRUE} saves the
+data as a CSV file named after the function, in the working directory.
+A file name in quotes, such as \code{"exam.csv"}, saves to that file. An
+existing file is never replaced; a number is added to the new name.}
 
-\item{decimals}{Number of decimal places for rounding (default = 2)}
-
-\item{seed}{Integer seed for reproducibility (default = NULL)}
-
-\item{export_csv}{Either \code{FALSE} (default; nothing is written),
-\code{TRUE} (write a CSV with an auto-generated name to the current
-working directory), or a file path giving the CSV destination}
-
-\item{run_analysis}{Logical; run t-tests automatically? (default = TRUE)}
+\item{show_results}{\code{TRUE} (the default) prints a short summary: the
+targets beside what the data actually have, then the t test. \code{FALSE}
+prints nothing.}
 }
 \value{
-A list with:
-\item{data}{Data frame with the outcome and group variables}
-\item{group1_stats}{Descriptive statistics for Group 1}
-\item{group2_stats}{Descriptive statistics for Group 2}
-\item{cohens_d}{Cohen's d effect size}
-\item{pooled_sd}{Pooled standard deviation}
-\item{iterations}{Iteration counts for each group}
-\item{t_test_pooled}{Pooled-variance t-test (if \code{run_analysis = TRUE})}
-\item{t_test_welch}{Welch's t-test (if \code{run_analysis = TRUE})}
+A data frame, returned invisibly: in long layout, \code{n1 + n2} rows
+and two columns (\code{group} and the measured variable); in wide layout, one
+column per group. The summary is stored inside it;
+see it again with \code{\link[=dgen_results]{dgen_results()}}.
 }
 \description{
-Creates data for an independent samples t-test with two groups having
-specified means and standard deviations on a continuous outcome variable.
-Uses iterative refinement to achieve exact target statistics for each group.
-Both a pooled-variance t-test and Welch's t-test are run automatically.
+Creates two independent groups, each with exactly the mean and standard
+deviation you choose, and tests the difference between their means.
+}
+\details{
+\strong{What is exact.} The mean and SD of each group, rounded to
+\code{decimals + 1} places, equal \code{m} and \code{sd}. SDs are sample SDs (\code{n - 1}
+in the denominator; Excel's \code{STDEV.S}). If you give \code{d}, Cohen's d of
+the returned data, rounded to 2 decimal places, equals \code{d}. The t
+statistics, p-values and confidence interval are calculated from the data
+and shown in the summary; they are not targets.
+
+\strong{Direction.} Differences are always the first group minus the second:
+the difference in means, t, the confidence interval and Cohen's d all run
+that way, as they do in the Excel Data Analysis ToolPak (Variable 1 minus
+Variable 2) and in R. The summary names the direction. If a student's
+software shows the opposite sign, it listed the groups in the other
+order: a CSV file does not record the order, and some programs sort group
+names alphabetically. The size of t and the p-value are the same either
+way.
+
+\strong{Using \code{d}.} Cohen's d here is (first mean - second mean) / pooled SD,
+so a positive \code{d} makes the first group higher and a negative \code{d} makes
+the second group higher. Give the first group's mean as \code{m}, and \code{d}; the
+second group's mean is set to \verb{m - d * pooled SD}, moved to the nearest
+mean that its \code{n2} rounded values can have.
+
+\strong{Limits.} The data are bell-shaped, with no minimum or maximum. When a
+request cannot be met, the function stops and says why; in rare cases
+that can take several seconds.
+
+The same data serve a two-sample z test, an F test of two variances, a
+point-biserial correlation, and a simple logistic regression of group on
+the measured variable.
 }
 \examples{
-result <- t_indep_gen(
-  n1 = 30, mean1 = 50, sd1 = 10, label1 = "Control",
-  n2 = 30, mean2 = 55, sd2 = 10, label2 = "Treatment",
-  var_name = "Test_Score"
-)
-result$t_test_pooled
-result$t_test_welch
+scores <- t_indep_gen(n1 = 25, n2 = 25, m = c(72, 78), sd = c(9, 10),
+                      labels = c("Online", "Classroom"),
+                      var_name = "score", decimals = 0, seed = 1)
+t.test(score ~ group, data = scores, var.equal = TRUE)   # Online - Classroom
+
+# One column per group, for the Excel Data Analysis ToolPak
+wide <- t_indep_gen(n1 = 25, n2 = 25, m = c(72, 78), sd = c(9, 10),
+                    labels = c("Online", "Classroom"), layout = "wide",
+                    decimals = 0, seed = 1, show_results = FALSE)
+head(wide)
+
+# The same design from an effect size. d is Online minus Classroom, so
+# d = -0.6 puts Classroom 0.6 pooled SDs higher
+scores <- t_indep_gen(n1 = 25, n2 = 25, m = 72, sd = c(9, 10), d = -0.6,
+                      labels = c("Online", "Classroom"),
+                      var_name = "score", decimals = 0, seed = 1)
 
 }

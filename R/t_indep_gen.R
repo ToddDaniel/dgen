@@ -1,163 +1,153 @@
-#' Generate Data for an Independent Samples T-Test
+# t_indep_gen(): data for an independent-samples t test.
+# Method: one exact variable per group from the engine, then the t test of
+# the difference between the two group means.
+
+#' Generate data for an independent-samples t test
 #'
-#' Creates data for an independent samples t-test with two groups having
-#' specified means and standard deviations on a continuous outcome variable.
-#' Uses iterative refinement to achieve exact target statistics for each group.
-#' Both a pooled-variance t-test and Welch's t-test are run automatically.
+#' Creates two independent groups, each with exactly the mean and standard
+#' deviation you choose, and tests the difference between their means.
 #'
-#' @param n1 Sample size for Group 1
-#' @param mean1 Mean for Group 1
-#' @param sd1 Standard deviation for Group 1
-#' @param label1 Label for Group 1 (default = \code{"Group1"})
-#' @param n2 Sample size for Group 2
-#' @param mean2 Mean for Group 2
-#' @param sd2 Standard deviation for Group 2
-#' @param label2 Label for Group 2 (default = \code{"Group2"})
-#' @param var_name Name for the continuous outcome variable (default =
-#'   \code{"Score"})
-#' @param group_name Name for the grouping variable (default = \code{"Group"})
-#' @param decimals Number of decimal places for rounding (default = 2)
-#' @param seed Integer seed for reproducibility (default = NULL)
-#' @param export_csv Either \code{FALSE} (default; nothing is written),
-#'   \code{TRUE} (write a CSV with an auto-generated name to the current
-#'   working directory), or a file path giving the CSV destination
-#' @param run_analysis Logical; run t-tests automatically? (default = TRUE)
+#' @details
+#' **What is exact.** The mean and SD of each group, rounded to
+#' `decimals + 1` places, equal `m` and `sd`. SDs are sample SDs (`n - 1`
+#' in the denominator; Excel's `STDEV.S`). If you give `d`, Cohen's d of
+#' the returned data, rounded to 2 decimal places, equals `d`. The t
+#' statistics, p-values and confidence interval are calculated from the data
+#' and shown in the summary; they are not targets.
 #'
-#' @return A list with:
-#'   \item{data}{Data frame with the outcome and group variables}
-#'   \item{group1_stats}{Descriptive statistics for Group 1}
-#'   \item{group2_stats}{Descriptive statistics for Group 2}
-#'   \item{cohens_d}{Cohen's d effect size}
-#'   \item{pooled_sd}{Pooled standard deviation}
-#'   \item{iterations}{Iteration counts for each group}
-#'   \item{t_test_pooled}{Pooled-variance t-test (if \code{run_analysis = TRUE})}
-#'   \item{t_test_welch}{Welch's t-test (if \code{run_analysis = TRUE})}
+#' **Direction.** Differences are always the first group minus the second:
+#' the difference in means, t, the confidence interval and Cohen's d all run
+#' that way, as they do in the Excel Data Analysis ToolPak (Variable 1 minus
+#' Variable 2) and in R. The summary names the direction. If a student's
+#' software shows the opposite sign, it listed the groups in the other
+#' order: a CSV file does not record the order, and some programs sort group
+#' names alphabetically. The size of t and the p-value are the same either
+#' way.
+#'
+#' **Using `d`.** Cohen's d here is (first mean - second mean) / pooled SD,
+#' so a positive `d` makes the first group higher and a negative `d` makes
+#' the second group higher. Give the first group's mean as `m`, and `d`; the
+#' second group's mean is set to `m - d * pooled SD`, moved to the nearest
+#' mean that its `n2` rounded values can have.
+#'
+#' **Limits.** The data are bell-shaped, with no minimum or maximum. When a
+#' request cannot be met, the function stops and says why; in rare cases
+#' that can take several seconds.
+#'
+#' The same data serve a two-sample z test, an F test of two variances, a
+#' point-biserial correlation, and a simple logistic regression of group on
+#' the measured variable.
+#'
+#' @inheritParams dgen
+#' @param n1,n2 Sample sizes of the first and second group. `n2` is the same
+#'   as `n1` unless you say otherwise.
+#' @param m Target means of the two groups, such as `c(72, 78)`. If you give
+#'   `d`, give only the first group's mean.
+#' @param sd Target standard deviations of the two groups, such as
+#'   `c(9, 10)`.
+#' @param d Target Cohen's d, to 2 decimal places, as another way of setting
+#'   the second group's mean.
+#' @param labels Names of the two groups, in quotes, first group first. The
+#'   default is `"Group 1"` and `"Group 2"`. In long layout the `group`
+#'   column keeps the groups in this order.
+#' @param var_name Name for the measured variable, in quotes. The default is
+#'   `"x"`. Not used in wide layout, where the columns are named by `labels`.
+#' @param layout `"long"` (the default) gives one row per observation, with
+#'   a `group` column and a column for the measured variable. `"wide"` gives
+#'   one column per group, the layout the Excel Data Analysis ToolPak needs;
+#'   if the groups differ in size, the shorter column ends with empty (`NA`)
+#'   cells.
+#' @param show_results `TRUE` (the default) prints a short summary: the
+#'   targets beside what the data actually have, then the t test. `FALSE`
+#'   prints nothing.
+#'
+#' @return A data frame, returned invisibly: in long layout, `n1 + n2` rows
+#'   and two columns (`group` and the measured variable); in wide layout, one
+#'   column per group. The summary is stored inside it;
+#'   see it again with [dgen_results()].
 #'
 #' @examples
-#' result <- t_indep_gen(
-#'   n1 = 30, mean1 = 50, sd1 = 10, label1 = "Control",
-#'   n2 = 30, mean2 = 55, sd2 = 10, label2 = "Treatment",
-#'   var_name = "Test_Score"
-#' )
-#' result$t_test_pooled
-#' result$t_test_welch
+#' scores <- t_indep_gen(n1 = 25, n2 = 25, m = c(72, 78), sd = c(9, 10),
+#'                       labels = c("Online", "Classroom"),
+#'                       var_name = "score", decimals = 0, seed = 1)
+#' t.test(score ~ group, data = scores, var.equal = TRUE)   # Online - Classroom
+#'
+#' # One column per group, for the Excel Data Analysis ToolPak
+#' wide <- t_indep_gen(n1 = 25, n2 = 25, m = c(72, 78), sd = c(9, 10),
+#'                     labels = c("Online", "Classroom"), layout = "wide",
+#'                     decimals = 0, seed = 1, show_results = FALSE)
+#' head(wide)
+#'
+#' # The same design from an effect size. d is Online minus Classroom, so
+#' # d = -0.6 puts Classroom 0.6 pooled SDs higher
+#' scores <- t_indep_gen(n1 = 25, n2 = 25, m = 72, sd = c(9, 10), d = -0.6,
+#'                       labels = c("Online", "Classroom"),
+#'                       var_name = "score", decimals = 0, seed = 1)
 #'
 #' @export
-t_indep_gen <- function(n1,
-                         mean1,
-                         sd1,
-                         label1     = "Group1",
-                         n2,
-                         mean2,
-                         sd2,
-                         label2     = "Group2",
-                         var_name   = "Score",
-                         group_name = "Group",
-                         decimals   = 2,
-                         seed       = NULL,
-                         export_csv = FALSE,
-                         run_analysis = TRUE) {
+t_indep_gen <- function(n1, n2 = n1, m, sd, d = NULL, decimals = 2,
+                        labels = NULL, var_name = NULL, layout = "long",
+                        seed = NULL, export_csv = FALSE, show_results = TRUE) {
 
-  # Validation
-  if (!is.numeric(n1) || n1 <= 0 || n1 != round(n1)) stop("'n1' must be a positive integer")
-  if (!is.numeric(n2) || n2 <= 0 || n2 != round(n2)) stop("'n2' must be a positive integer")
-  if (!is.numeric(sd1) || sd1 < 0) stop("'sd1' must be non-negative")
-  if (!is.numeric(sd2) || sd2 < 0) stop("'sd2' must be non-negative")
-  if (!is.numeric(decimals) || decimals < 0 || decimals != round(decimals))
-    stop("'decimals' must be a non-negative integer")
-  if (nchar(label1) == 0 || nchar(label2) == 0) stop("Group labels cannot be empty")
-  if (label1 == label2) warning("Group labels are identical")
-
-  if (!is.null(seed)) set.seed(seed)
-
-  max_iter <- 100000
-
-  # Generate Group 1 with exact statistics
-  target_mean1 <- round(mean1, decimals + 1)
-  target_sd1   <- round(sd1,   decimals + 1)
-  iteration1   <- 0
-  repeat {
-    iteration1 <- iteration1 + 1
-    z1         <- scale(stats::rnorm(n1, mean = mean1, sd = sd1))
-    g1         <- round(z1[, 1] * target_sd1 + target_mean1, decimals)
-    if (round(mean(g1), decimals + 1) == target_mean1 &&
-        round(stats::sd(g1), decimals + 1) == target_sd1) break
-    if (iteration1 >= max_iter) { warning("Max iterations reached for Group 1."); break }
+  # 1. Check inputs; with d, work out the second mean it stands for
+  if (missing(n1) || missing(m) || missing(sd)) {
+    stop("t_indep_gen needs n1, m and sd, for example ",
+         "t_indep_gen(n1 = 25, m = c(72, 78), sd = c(9, 10)).", call. = FALSE)
+  }
+  need_sample_size(n1, "n1", 25)
+  need_sample_size(n2, "n2", 25)
+  need_numbers(sd, 2, "sd", "c(9, 10)")
+  check_decimals(decimals)
+  check_d(d)
+  group_names <- variable_names(labels, 2, c("Group 1", "Group 2"),
+                                "labels", "groups")
+  name <- variable_names(var_name, 1, "x")
+  use_seed(seed)
+  if (is.null(d)) {
+    need_numbers(m, 2, "m", "c(72, 78)")
+  } else {
+    if (!is_number(m) || length(m) != 1) {
+      stop("When you give d, m is the first group's mean only: a single ",
+           "number, such as m = 72. The second mean is worked out from d.",
+           call. = FALSE)
+    }
+    check_precision(m, decimals + 1, decimals, "means")
+    pooled_sd <- sqrt(((n1 - 1) * sd[1]^2 + (n2 - 1) * sd[2]^2) /
+                        (n1 + n2 - 2))
+    m <- c(m, mean_from_d(m, -d, pooled_sd, n2, decimals))
   }
 
-  # Generate Group 2 with exact statistics
-  target_mean2 <- round(mean2, decimals + 1)
-  target_sd2   <- round(sd2,   decimals + 1)
-  iteration2   <- 0
-  repeat {
-    iteration2 <- iteration2 + 1
-    z2         <- scale(stats::rnorm(n2, mean = mean2, sd = sd2))
-    g2         <- round(z2[, 1] * target_sd2 + target_mean2, decimals)
-    if (round(mean(g2), decimals + 1) == target_mean2 &&
-        round(stats::sd(g2), decimals + 1) == target_sd2) break
-    if (iteration2 >= max_iter) { warning("Max iterations reached for Group 2."); break }
+  # 2. Build exact data; a typed-in d is one more promise for the engine
+  cohens_d <- function(groups) {
+    spread <- sqrt(((n1 - 1) * stats::var(groups[[1]]) +
+                      (n2 - 1) * stats::var(groups[[2]])) / (n1 + n2 - 2))
+    (mean(groups[[1]]) - mean(groups[[2]])) / spread
   }
-
-  group_labels <- c(label1, label2)
-  data_out <- data.frame(
-    continuous = c(g1, g2),
-    group      = c(rep(label1, n1), rep(label2, n2)),
-    stringsAsFactors = FALSE
+  groups <- exact_groups(
+    c(n1, n2), m, sd, decimals, derived_means = !is.null(d),
+    also_check = if (!is.null(d)) {
+      function(groups) reports_as(cohens_d(groups), d)
+    }
   )
-  colnames(data_out) <- c(var_name, group_name)
+  data <- arrange_groups(groups, group_names, name, layout)
 
-  m1_ach  <- mean(g1);         m2_ach  <- mean(g2)
-  sd1_ach <- stats::sd(g1);    sd2_ach <- stats::sd(g2)
-  pooled_sd <- sqrt(((n1 - 1) * sd1_ach^2 + (n2 - 1) * sd2_ach^2) / (n1 + n2 - 2))
-  cohens_d  <- (m2_ach - m1_ach) / pooled_sd
-
-  group1_stats <- data.frame(Group = label1, N = n1,
-                              Target_Mean = mean1, Achieved_Mean = round(m1_ach, decimals + 2),
-                              Target_SD   = sd1,   Achieved_SD   = round(sd1_ach, decimals + 2))
-  group2_stats <- data.frame(Group = label2, N = n2,
-                              Target_Mean = mean2, Achieved_Mean = round(m2_ach, decimals + 2),
-                              Target_SD   = sd2,   Achieved_SD   = round(sd2_ach, decimals + 2))
-
-  t_test_pooled <- NULL
-  t_test_welch  <- NULL
-  if (run_analysis) {
-    fml           <- stats::as.formula(paste(var_name, "~", group_name))
-    t_test_pooled <- stats::t.test(fml, data = data_out, var.equal = TRUE)
-    t_test_welch  <- stats::t.test(fml, data = data_out, var.equal = FALSE)
-  }
-
-  dgen_export(data_out, export_csv,
-              paste0(var_name, "_by_", group_name, "_dgen.csv"))
-
-  message("Independent t-test data generated.")
-  message(sprintf("Group 1 (%s): n=%d, M=%.2f, SD=%.2f",
-                  label1, n1, m1_ach, sd1_ach))
-  message(sprintf("Group 2 (%s): n=%d, M=%.2f, SD=%.2f",
-                  label2, n2, m2_ach, sd2_ach))
-  message(sprintf("Cohen's d: %.3f | Pooled SD: %.3f", cohens_d, pooled_sd))
-
-  if (run_analysis) {
-    sd_ratio <- sd2_ach / sd1_ach
-    use_welch <- !(sd_ratio >= 0.5 && sd_ratio <= 2.0)
-    test_used <- if (use_welch) t_test_welch else t_test_pooled
-    p <- test_used$p.value
-    message(sprintf("Recommended test: %s | p = %s",
-                    ifelse(use_welch, "Welch's", "pooled"),
-                    format.pval(p, digits = 3, eps = 0.001)))
-  }
-
-  result <- list(
-    data         = data_out,
-    group1_stats = group1_stats,
-    group2_stats = group2_stats,
-    cohens_d     = cohens_d,
-    pooled_sd    = pooled_sd,
-    iterations   = c(Group1 = iteration1, Group2 = iteration2)
+  # 3. Run the tests (first group minus second), assemble the summary and
+  #    hand everything back
+  direction <- paste(group_names[1], "-", group_names[2])
+  pooled <- stats::t.test(groups[[1]], groups[[2]], var.equal = TRUE)
+  welch  <- stats::t.test(groups[[1]], groups[[2]])
+  results <- list(
+    title = group_title("Independent-samples t test", var_name, labels,
+                        group_names, layout),
+    table = compare_table(group_names, groups, m, sd, decimals),
+    lines = c(paste0("Difference in means (", direction, ") = ",
+                     show_number(mean(groups[[1]]) - mean(groups[[2]]),
+                                 decimals + 1)),
+              t_line(pooled, "equal variances"),
+              t_line(welch, "Welch, unequal variances"),
+              ci_line(pooled, "difference", decimals),
+              d_line(cohens_d(groups), d, direction = direction)),
+    note  = data_note(data, decimals)
   )
-  if (run_analysis) {
-    result$t_test_pooled <- t_test_pooled
-    result$t_test_welch  <- t_test_welch
-  }
-
-  invisible(result)
+  deliver(data, results, show_results, export_csv, "t_indep_gen")
 }

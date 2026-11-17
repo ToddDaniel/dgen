@@ -1,272 +1,121 @@
-#' Generate Data for a One-Way ANOVA
+# anova_gen(): data for a one-way analysis of variance.
+# Method: one exact variable per group from the engine, then the ANOVA
+# table and effect sizes calculated from the data.
+
+#' Generate data for a one-way ANOVA
 #'
-#' Creates data for a one-way ANOVA design with \code{k} groups, each having
-#' exact specified means and standard deviations. Uses iterative refinement for
-#' precision. Automatically computes the ANOVA table, effect sizes, assumption
-#' checks, and post-hoc tests when \code{run_analysis = TRUE}.
+#' Creates two or more independent groups, each with exactly the mean and
+#' standard deviation you choose, and runs the one-way analysis of variance.
 #'
-#' @param k Number of groups (integer >= 3)
-#' @param n Per-group sample size. Either a single integer (equal group sizes)
-#'   or a vector of length \code{k} (unequal sizes).
-#' @param means Numeric vector of length \code{k} specifying target group means
-#' @param sds Numeric vector of length \code{k} specifying target group SDs
-#' @param labels Character vector of length \code{k} specifying group labels.
-#'   Defaults to \code{"Group1"}, \code{"Group2"}, etc.
-#' @param dv_name Name for the dependent variable column (default =
-#'   \code{"Score"})
-#' @param factor_name Name for the grouping factor column (default =
-#'   \code{"Group"})
-#' @param decimals Number of decimal places for rounding (default = 2)
-#' @param seed Integer seed for reproducibility (default = NULL)
-#' @param export_csv Either \code{FALSE} (default; nothing is written),
-#'   \code{TRUE} (write a CSV with an auto-generated name to the current
-#'   working directory), or a file path giving the CSV destination.
-#'   When \code{output_format = "both"} and a file path is supplied,
-#'   \code{_wide}/\code{_long} is inserted before the extension
-#' @param output_format One of \code{"wide"}, \code{"long"}, or \code{"both"}
-#'   (default = \code{"long"})
-#' @param run_analysis Logical; compute ANOVA and related statistics?
-#'   (default = TRUE)
+#' @details
+#' **What is exact.** The mean and SD of each group, rounded to
+#' `decimals + 1` places, equal `m` and `sd`. SDs are sample SDs (`n - 1`
+#' in the denominator; Excel's `STDEV.S`). The sums of squares, F, the
+#' p-value and the effect sizes are calculated from the data and shown in
+#' the summary; they are not targets.
 #'
-#' @return A list with:
-#'   \item{data}{Primary data frame (per \code{output_format})}
-#'   \item{data_wide}{Wide-format data (if \code{output_format} is
-#'     \code{"wide"} or \code{"both"})}
-#'   \item{data_long}{Long-format data (if \code{output_format} is
-#'     \code{"long"} or \code{"both"})}
-#'   \item{group_stats}{Descriptive statistics for each group}
-#'   \item{iterations}{Iteration counts per group}
-#'   \item{anova_table}{ANOVA source table (if \code{run_analysis = TRUE})}
-#'   \item{effect_sizes}{eta², partial eta², omega², partial omega²}
-#'   \item{assumptions}{Levene's test and Shapiro-Wilk results}
-#'   \item{posthoc_fisher}{Fisher's LSD pairwise comparisons}
-#'   \item{posthoc_tukey}{Tukey's HSD pairwise comparisons}
+#' **Effect sizes.** Eta squared is the between-groups sum of squares
+#' divided by the total sum of squares: the share of the variation in the
+#' data that lies between the group means. Omega squared is a less
+#' optimistic estimate of the same share in the population.
+#'
+#' **Limits.** The data are bell-shaped, with no minimum or maximum. When a
+#' request cannot be met, the function stops and says why; in rare cases
+#' that can take several seconds.
+#'
+#' With two groups, F equals the square of the equal-variances t from
+#' [t_indep_gen()].
+#'
+#' @inheritParams t_indep_gen
+#' @param n Sample size of each group: one number for equal groups, or one
+#'   number per group.
+#' @param m Target group means, one per group, such as `c(70, 75, 82)`.
+#' @param sd Target standard deviations, one per group.
+#' @param labels Names of the groups, in quotes. The default is
+#'   `"Group 1"`, `"Group 2"`, ... In long layout the `group` column keeps
+#'   the groups in this order.
+#' @param show_results `TRUE` (the default) prints a short summary: the
+#'   targets beside what the data actually have, then the ANOVA table and
+#'   effect sizes. `FALSE` prints nothing.
+#'
+#' @return A data frame, returned invisibly: in long layout, one row per
+#'   observation and two columns (`group` and the measured variable); in
+#'   wide layout, one column per group. The summary is stored inside it;
+#'   see it again with [dgen_results()].
 #'
 #' @examples
-#' result <- anova_gen(
-#'   k = 3, n = 30,
-#'   means = c(50, 55, 60), sds = c(10, 10, 10),
-#'   labels = c("Control", "Low", "High"),
-#'   dv_name = "Score"
-#' )
-#' result$anova_table
-#' result$posthoc_tukey
+#' sales <- anova_gen(n = 12, m = c(70, 75, 82), sd = c(8, 9, 8),
+#'                    labels = c("North", "South", "West"),
+#'                    var_name = "sales", decimals = 0, seed = 1)
+#' summary(aov(sales ~ group, data = sales))
+#'
+#' # One column per region, for the Excel Data Analysis ToolPak
+#' wide <- anova_gen(n = 12, m = c(70, 75, 82), sd = c(8, 9, 8),
+#'                   labels = c("North", "South", "West"), layout = "wide",
+#'                   decimals = 0, seed = 1, show_results = FALSE)
+#' head(wide)
 #'
 #' @export
-anova_gen <- function(k,
-                       n,
-                       means,
-                       sds,
-                       labels       = NULL,
-                       dv_name      = "Score",
-                       factor_name  = "Group",
-                       decimals     = 2,
-                       seed         = NULL,
-                       export_csv   = FALSE,
-                       output_format = "long",
-                       run_analysis = TRUE) {
+anova_gen <- function(n, m, sd, decimals = 2, labels = NULL, var_name = NULL,
+                      layout = "long", seed = NULL, export_csv = FALSE,
+                      show_results = TRUE) {
 
-  # Expand scalar n to vector
-  if (length(n) == 1) n <- rep(n, k)
-
-  # Default labels
-  if (is.null(labels)) labels <- paste0("Group", seq_len(k))
-
-  # Validation
-  if (!is.numeric(k) || k < 3 || k != round(k))
-    stop("'k' must be an integer >= 3 (use t_indep_gen() for 2 groups)")
-  if (length(means) != k)  stop("Length of 'means' must equal k")
-  if (length(sds) != k)    stop("Length of 'sds' must equal k")
-  if (length(n) != k)      stop("Length of 'n' must equal k")
-  if (length(labels) != k) stop("Length of 'labels' must equal k")
-  if (any(n <= 0) || any(n != round(n))) stop("All values in 'n' must be positive integers")
-  if (any(sds < 0))  stop("All values in 'sds' must be non-negative")
-  if (!is.numeric(decimals) || decimals < 0 || decimals != round(decimals))
-    stop("'decimals' must be a non-negative integer")
-  if (any(labels == "")) stop("Group labels cannot be empty strings")
-  if (length(unique(labels)) != k) stop("Group labels must be unique")
-  if (!output_format %in% c("wide", "long", "both"))
-    stop("'output_format' must be 'wide', 'long', or 'both'")
-
-  if (!is.null(seed)) set.seed(seed)
-
-  target_means <- round(means, decimals + 1)
-  target_sds   <- round(sds,   decimals + 1)
-  max_iter     <- 100000
-  group_data   <- list()
-  iterations   <- numeric(k)
-
-  for (i in seq_len(k)) {
-    iter <- 0
-    repeat {
-      iter  <- iter + 1
-      z     <- scale(stats::rnorm(n[i], mean = means[i], sd = sds[i]))
-      gd    <- round(z[, 1] * target_sds[i] + target_means[i], decimals)
-      if (round(mean(gd), decimals + 1) == target_means[i] &&
-          round(stats::sd(gd), decimals + 1) == target_sds[i]) break
-      if (iter >= max_iter) {
-        warning(paste("Max iterations reached for", labels[i]))
-        break
-      }
-    }
-    group_data[[i]] <- gd
-    iterations[i]   <- iter
+  # 1. Check inputs
+  if (missing(n) || missing(m) || missing(sd)) {
+    stop("anova_gen needs n, m and sd, for example ",
+         "anova_gen(n = 12, m = c(70, 75, 82), sd = c(8, 9, 8)).",
+         call. = FALSE)
   }
+  n_groups <- length(m)
+  if (n_groups < 2) {
+    stop("anova_gen compares two or more groups, so it needs a mean and an ",
+         "SD for each one, such as m = c(70, 75, 82) and sd = c(8, 9, 8).",
+         call. = FALSE)
+  }
+  group_names <- variable_names(labels, n_groups,
+                                paste("Group", seq_len(n_groups)),
+                                "labels", "groups")
+  name <- variable_names(var_name, 1, "x")
+  use_seed(seed)
 
-  # Wide format
-  max_n    <- max(n)
-  data_wide <- as.data.frame(
-    matrix(NA, nrow = max_n, ncol = k),
-    stringsAsFactors = FALSE
+  # 2. Build exact data, one group at a time
+  groups <- exact_groups(n, m, sd, decimals)
+  data   <- arrange_groups(groups, group_names, name, layout)
+
+  # 3. Run the ANOVA, assemble the summary and hand everything back
+  anova <- anova_table(groups)
+  results <- list(
+    title = group_title("One-way ANOVA", var_name, labels, group_names,
+                        layout),
+    table = compare_table(group_names, groups, m, sd, decimals),
+    lines = c(utils::capture.output(print(anova$table)), "",
+              paste0("Eta squared = ", show_number(anova$eta_squared, 2),
+                     "   Omega squared = ",
+                     show_number(anova$omega_squared, 2))),
+    note  = data_note(data, decimals)
   )
-  colnames(data_wide) <- labels
-  for (i in seq_len(k)) data_wide[seq_len(n[i]), i] <- group_data[[i]]
+  deliver(data, results, show_results, export_csv, "anova_gen")
+}
 
-  # Long format
-  data_long <- data.frame(
-    dv     = unlist(group_data),
-    factor = rep(labels, times = n),
-    stringsAsFactors = FALSE
+# The one-way ANOVA table and its effect sizes, from a list of groups.
+anova_table <- function(groups) {
+  values <- unlist(groups)
+  group  <- factor(rep(seq_along(groups), lengths(groups)))
+  fit    <- stats::anova(stats::lm(values ~ group))
+
+  ss      <- fit[["Sum Sq"]]
+  df      <- fit[["Df"]]
+  ms      <- fit[["Mean Sq"]]
+  table <- data.frame(
+    "SS" = show_number(c(ss, sum(ss)), 2),
+    "df" = c(df, sum(df)),
+    "MS" = c(show_number(ms, 2), ""),
+    "F"  = c(show_number(fit[["F value"]][1], 2), "", ""),
+    "p"  = c(show_p(fit[["Pr(>F)"]][1]), "", ""),
+    row.names = c("Between groups", "Within groups", "Total")
   )
-  colnames(data_long) <- c(dv_name, factor_name)
-  data_long[[factor_name]] <- factor(data_long[[factor_name]], levels = labels)
-
-  group_stats <- data.frame(
-    Group    = labels,
-    n        = n,
-    Mean     = sapply(group_data, mean),
-    SD       = sapply(group_data, stats::sd),
-    Variance = sapply(group_data, stats::var),
-    Min      = sapply(group_data, min),
-    Max      = sapply(group_data, max),
-    stringsAsFactors = FALSE
-  )
-
-  anova_table    <- NULL
-  effect_sizes   <- NULL
-  assumptions    <- NULL
-  posthoc_fisher <- NULL
-  posthoc_tukey  <- NULL
-
-  if (run_analysis) {
-    N          <- sum(n)
-    grand_mean <- sum(means * n) / N
-    group_means <- sapply(group_data, mean)
-    SSB  <- sum(n * (group_means - grand_mean)^2)
-    SSW  <- sum(sapply(seq_len(k), function(i)
-      sum((group_data[[i]] - group_means[i])^2)))
-    SST  <- SSB + SSW
-    dfB  <- k - 1;  dfW <- N - k;  dfT <- N - 1
-    MSB  <- SSB / dfB;  MSW <- SSW / dfW
-    Fstat <- MSB / MSW
-    pval  <- stats::pf(Fstat, dfB, dfW, lower.tail = FALSE)
-
-    anova_table <- data.frame(
-      Source = c("Between", "Within", "Total"),
-      SS = c(SSB, SSW, SST),
-      df = c(dfB, dfW, dfT),
-      MS = c(MSB, MSW, NA),
-      F  = c(Fstat, NA, NA),
-      p  = c(pval, NA, NA)
-    )
-
-    eta_sq   <- SSB / SST
-    omega_sq <- (SSB - dfB * MSW) / (SST + MSW)
-    effect_sizes <- list(
-      eta_squared         = eta_sq,
-      eta_squared_partial = SSB / (SSB + SSW),
-      omega_squared       = omega_sq,
-      omega_squared_partial = (dfB * (MSB - MSW)) / (SSB + (N - dfB) * MSW)
-    )
-
-    # Levene's test (median-based)
-    group_medians <- sapply(group_data, stats::median)
-    abs_devs <- lapply(seq_len(k), function(i) abs(group_data[[i]] - group_medians[i]))
-    mean_ad  <- sapply(abs_devs, mean)
-    gm_ad    <- sum(n * mean_ad) / N
-    Fl <- (sum(n * (mean_ad - gm_ad)^2) / dfB) /
-          (sum(sapply(seq_len(k), function(i) sum((abs_devs[[i]] - mean_ad[i])^2))) / dfW)
-    pl <- stats::pf(Fl, dfB, dfW, lower.tail = FALSE)
-
-    sw_results <- lapply(seq_len(k), function(i) {
-      ni <- n[i]
-      if (ni >= 3 && ni <= 5000) {
-        sw <- stats::shapiro.test(group_data[[i]])
-        list(W = as.numeric(sw$statistic), p = sw$p.value)
-      } else list(W = NA, p = NA)
-    })
-
-    assumptions <- list(
-      levene_F       = Fl,
-      levene_p       = pl,
-      shapiro_results = sw_results,
-      variance_ratio  = max(sapply(group_data, stats::var)) /
-                        min(sapply(group_data, stats::var))
-    )
-
-    # Post-hoc
-    comps <- utils::combn(k, 2)
-    nc    <- ncol(comps)
-    t_crit <- stats::qt(0.975, dfW)
-    q_crit <- stats::qtukey(0.95, k, dfW)
-
-    fisher_df <- data.frame(Comparison = character(nc), Mean_Diff = numeric(nc),
-                             LSD = numeric(nc), Significant = logical(nc),
-                             stringsAsFactors = FALSE)
-    tukey_df  <- data.frame(Comparison = character(nc), Mean_Diff = numeric(nc),
-                             HSD = numeric(nc), Significant = logical(nc),
-                             stringsAsFactors = FALSE)
-
-    for (i in seq_len(nc)) {
-      g1 <- comps[1, i];  g2 <- comps[2, i]
-      md  <- abs(group_means[g1] - group_means[g2])
-      lsd <- t_crit * sqrt(MSW * (1/n[g1] + 1/n[g2]))
-      n_h <- 2 / (1/n[g1] + 1/n[g2])
-      hsd <- q_crit * sqrt(MSW / n_h)
-      fisher_df[i, ] <- list(paste(labels[g1], "vs", labels[g2]), md, lsd, md > lsd)
-      tukey_df[i, ]  <- list(paste(labels[g1], "vs", labels[g2]), md, hsd, md > hsd)
-    }
-    posthoc_fisher <- fisher_df
-    posthoc_tukey  <- tukey_df
-  }
-
-  dgen_export_pair(data_wide, data_long, output_format, export_csv,
-                   paste0(dv_name, "_by_", factor_name, "_wide_dgen.csv"),
-                   paste0(dv_name, "_by_", factor_name, "_long_dgen.csv"))
-
-  message("One-way ANOVA data generated (k = ", k, ", N = ", sum(n), ")")
-  message(paste(utils::capture.output(
-    print(group_stats[, c("Group", "n", "Mean", "SD")], row.names = FALSE,
-          digits = decimals + 2)), collapse = "\n"))
-  if (run_analysis && !is.null(anova_table)) {
-    at <- anova_table
-    at$SS <- round(at$SS, 2); at$MS <- round(at$MS, 2); at$F <- round(at$F, 3)
-    at$p  <- format.pval(at$p, digits = 3, eps = 0.001)
-    message("\nANOVA table:\n",
-            paste(utils::capture.output(print(at, row.names = FALSE)),
-                  collapse = "\n"))
-    message(sprintf("\nomega^2 = %.3f | eta^2 = %.3f",
-                    effect_sizes$omega_squared, effect_sizes$eta_squared))
-  }
-
-  result <- list(group_stats = group_stats, iterations = iterations)
-  if (output_format == "wide") {
-    result$data      <- data_wide
-    result$data_wide <- data_wide
-  } else if (output_format == "long") {
-    result$data      <- data_long
-    result$data_long <- data_long
-  } else {
-    result$data_wide <- data_wide
-    result$data_long <- data_long
-  }
-  if (run_analysis) {
-    result$anova_table    <- anova_table
-    result$effect_sizes   <- effect_sizes
-    result$assumptions    <- assumptions
-    result$posthoc_fisher <- posthoc_fisher
-    result$posthoc_tukey  <- posthoc_tukey
-  }
-
-  invisible(result)
+  list(table         = table,
+       eta_squared   = ss[1] / sum(ss),
+       # omega squared removes the part of SS-between expected by chance
+       omega_squared = (ss[1] - df[1] * ms[2]) / (sum(ss) + ms[2]))
 }

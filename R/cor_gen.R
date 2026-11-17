@@ -1,207 +1,135 @@
-#' Generate Multiple Correlated Variables
+# cor_gen(): two or more variables with exact means, SDs and correlations.
+# Method: the exact engine builds all the variables together, so every
+# correlation in the rounded data matches its target to 2 decimal places.
+
+#' Generate correlated data with exact means, SDs and correlations
 #'
-#' Creates two or more correlated continuous variables with specified means,
-#' standard deviations, and correlation structure. Uses
-#' \code{MASS::mvrnorm()} with a Cholesky decomposition to achieve the
-#' specified population correlation matrix.
+#' Creates two variables whose means, standard deviations and correlation
+#' are exactly the values you ask for, in the rounded data your students
+#' will see. With a correlation table, it creates three or more variables.
 #'
-#' @param n Sample size (positive integer)
-#' @param m Numeric vector of target means, one per variable
-#' @param sd Numeric vector of target standard deviations, one per variable
-#' @param r Correlation structure. For two variables, a single numeric value.
-#'   For three or more variables, a symmetric correlation matrix with 1s on the
-#'   diagonal.
-#' @param var_names Character vector of variable names. Defaults to
-#'   \code{"Var1"}, \code{"Var2"}, etc.
-#' @param decimals Number of decimal places for rounding (default = 2)
-#' @param seed Integer seed for reproducibility (default = NULL)
-#' @param export_csv Either \code{FALSE} (default; nothing is written),
-#'   \code{TRUE} (write a CSV with an auto-generated name to the current
-#'   working directory), or a file path giving the CSV destination
-#' @param run_analysis Logical; run pairwise correlation tests? (default = TRUE)
+#' @details
+#' **What "exact" means.** The mean and SD of each variable, rounded to
+#' `decimals + 1` places, equal `m` and `sd`, and each correlation, rounded
+#' to 2 decimal places, equals `r`. SDs are sample SDs (`n - 1` in the
+#' denominator; Excel's `STDEV.S`).
 #'
-#' @return A list with:
-#'   \item{data}{Data frame with generated variables}
-#'   \item{targets}{Data frame of target means and SDs}
-#'   \item{achieved}{Data frame of achieved means and SDs}
-#'   \item{target_cors}{Target correlation matrix}
-#'   \item{achieved_cors}{Achieved correlation matrix}
-#'   \item{correlation_tests}{Pairwise test results (if \code{run_analysis = TRUE})}
-#'   \item{assumptions}{Shapiro-Wilk normality tests (if \code{run_analysis = TRUE})}
+#' **How it works.** Random bell-shaped values are transformed so that, in
+#' the sample itself, every variable has a mean of exactly 0 and an SD of
+#' exactly 1 and every pair is exactly uncorrelated. The correlations you
+#' asked for are then built in, the variables are rescaled to your means and
+#' SDs, and the data are rounded. A few values are moved by one unit to make
+#' each mean exact, and the draw is repeated until every SD and correlation
+#' of the rounded data matches as well.
+#'
+#' **Limits.** The data are bell-shaped, with no minimum or maximum. Coarse
+#' rounding makes exact correlations harder: with whole numbers, small SDs
+#' and several variables, use more decimals or a larger `n`. When a request
+#' cannot be met, `cor_gen()` stops and says why; in rare cases that can
+#' take several seconds.
+#'
+#' **Three or more variables.** Give `r` as a correlation table: a square
+#' matrix with 1s on the diagonal and the same values above and below it.
+#' This is also how to recreate a published study from its means, SDs and
+#' correlation table.
+#'
+#' **Regression.** The data can be used for simple linear regression: the
+#' slope of the second variable on the first is `r` times the ratio of
+#' their SDs.
+#'
+#' @inheritParams dgen
+#' @param m Target means, one for each variable, such as `c(50, 55)`.
+#' @param sd Target standard deviations, one for each variable.
+#' @param r Target correlation between the two variables, such as `0.5`.
+#'   For three or more variables, a correlation table (see Details).
+#' @param var_name Names for the variables, in quotes, such as
+#'   `c("hours", "exam")`. The default is `"x"` and `"y"` (or `"x1"`,
+#'   `"x2"`, ... for three or more).
+#' @param show_results `TRUE` (the default) prints a short summary: the
+#'   targets beside what the data actually have, then each correlation
+#'   with r squared and its test. `FALSE` prints nothing.
+#'
+#' @return A data frame with `n` rows and one column per variable, returned
+#'   invisibly. The summary is stored inside it; see it again with
+#'   [dgen_results()].
 #'
 #' @examples
-#' # Two correlated variables
-#' result <- cor_gen(n = 250, m = c(2.8, 2.6), sd = c(0.9, 0.85),
-#'                   r = 0.40, var_names = c("FP", "MD"))
+#' study <- cor_gen(n = 40, m = c(6.5, 78), sd = c(2.1, 9.5), r = 0.55,
+#'                  decimals = 1, var_name = c("hours", "exam"), seed = 1)
+#' cor(study$hours, study$exam)
 #'
-#' # Three variables with a correlation matrix
-#' cm <- matrix(c(1.0, 0.4, 0.3,
-#'                0.4, 1.0, 0.2,
-#'                0.3, 0.2, 1.0), nrow = 3, byrow = TRUE)
-#' result <- cor_gen(n = 250, m = c(2.8, 2.6, 3.0), sd = c(0.9, 0.85, 1.0),
-#'                   r = cm, var_names = c("FP", "MD", "Age"))
+#' # Simple regression on the same data
+#' coef(lm(exam ~ hours, data = study))
+#'
+#' # Three variables from a correlation table
+#' table <- matrix(c(1.00, 0.40, 0.30,
+#'                   0.40, 1.00, 0.20,
+#'                   0.30, 0.20, 1.00), nrow = 3)
+#' survey <- cor_gen(n = 100, m = c(2.8, 2.6, 3.0), sd = c(0.9, 0.85, 1.0),
+#'                   r = table, var_name = c("pay", "hours", "morale"),
+#'                   seed = 2)
 #'
 #' @export
-# ---
-# Adapted from MorseGen, originally written by Brendan Morse (1982-2018).
-# ---
-cor_gen <- function(n,
-                    m,
-                    sd,
-                    r,
-                    var_names = NULL,
-                    decimals = 2,
-                    seed = NULL,
-                    export_csv = FALSE,
-                    run_analysis = TRUE) {
+cor_gen <- function(n, m, sd, r, decimals = 2, var_name = NULL, seed = NULL,
+                    export_csv = FALSE, show_results = TRUE) {
 
-  # Input validation
-  if (!is.numeric(n) || length(n) != 1 || n <= 0 || n != round(n))
-    stop("'n' must be a positive integer")
-  if (length(m) != length(sd))
-    stop("'m' and 'sd' must have the same length")
-  if (any(sd < 0))
-    stop("All values in 'sd' must be non-negative")
-  if (!is.numeric(decimals) || decimals < 0 || decimals != round(decimals))
-    stop("'decimals' must be a non-negative integer")
-
-  n_vars <- length(m)
-
-  if (is.null(var_names)) {
-    var_names <- paste0("Var", seq_len(n_vars))
+  # 1. Check inputs
+  if (missing(n) || missing(m) || missing(sd) || missing(r)) {
+    stop("cor_gen needs n, m, sd and r, for example ",
+         "cor_gen(n = 30, m = c(50, 55), sd = c(10, 10), r = 0.5).",
+         call. = FALSE)
   }
-  if (length(var_names) != n_vars)
-    stop("'var_names' must have the same length as 'm'")
-
-  # Build correlation matrix
-  if (n_vars == 2 && length(r) == 1) {
-    cor_matrix <- matrix(c(1, r, r, 1), nrow = 2, byrow = TRUE)
-  } else if (is.matrix(r)) {
-    cor_matrix <- r
-  } else {
-    stop("For 3+ variables, 'r' must be a correlation matrix")
+  n_variables <- length(m)
+  if (n_variables < 2) {
+    stop("cor_gen makes two or more variables, so it needs a mean and an SD ",
+         "for each one, such as m = c(50, 55) and sd = c(10, 10).",
+         call. = FALSE)
   }
+  default <- if (n_variables == 2) c("x", "y")
+             else paste0("x", seq_len(n_variables))
+  names   <- variable_names(var_name, n_variables, default)
+  use_seed(seed)
 
-  if (nrow(cor_matrix) != n_vars || ncol(cor_matrix) != n_vars)
-    stop("Correlation matrix dimensions must match the number of variables")
-  if (!all(abs(diag(cor_matrix) - 1) < 1e-10))
-    stop("Correlation matrix diagonal must be all 1s")
-  if (!isSymmetric(cor_matrix))
-    stop("Correlation matrix must be symmetric")
+  # 2. Build exact data, all variables together
+  values <- exact_mv(n, m, sd, r, decimals)$data
+  data   <- stats::setNames(as.data.frame(values), names)
 
-  eigenvalues <- eigen(cor_matrix, only.values = TRUE)$values
-  if (any(eigenvalues <= 1e-10)) {
-    stop(paste(
-      "The correlation matrix is not positive definite.",
-      "The specified correlations may be mathematically impossible.",
-      "Try reducing some correlations and check the triangle inequality.",
-      sep = "\n"
-    ))
-  }
-
-  if (!is.null(seed)) set.seed(seed)
-
-  # Generate data
-  D          <- diag(sd)
-  cov_matrix <- D %*% cor_matrix %*% D
-  raw_data   <- MASS::mvrnorm(n = n, mu = m, Sigma = cov_matrix)
-  data_out   <- as.data.frame(round(raw_data, decimals), stringsAsFactors = FALSE)
-  colnames(data_out) <- var_names
-
-  achieved_means <- colMeans(data_out)
-  achieved_sds   <- apply(data_out, 2, stats::sd)
-  achieved_cors  <- stats::cor(data_out)
-
-  targets <- data.frame(
-    Variable    = var_names,
-    Target_Mean = m,
-    Target_SD   = sd,
-    stringsAsFactors = FALSE
-  )
-
-  achieved <- data.frame(
-    Variable      = var_names,
-    Achieved_Mean = round(achieved_means, decimals + 2),
-    Achieved_SD   = round(achieved_sds,   decimals + 2),
-    stringsAsFactors = FALSE
-  )
-
-  # Optional correlation tests
-  correlation_tests <- NULL
-  assumptions       <- NULL
-
-  if (run_analysis) {
-    n_pairs <- n_vars * (n_vars - 1) / 2
-    correlation_tests <- data.frame(
-      Pair        = character(n_pairs),
-      r_target    = numeric(n_pairs),
-      r_achieved  = numeric(n_pairs),
-      t_statistic = numeric(n_pairs),
-      df          = integer(n_pairs),
-      p_value     = numeric(n_pairs),
-      CI_lower    = numeric(n_pairs),
-      CI_upper    = numeric(n_pairs),
-      stringsAsFactors = FALSE
-    )
-
-    idx <- 1
-    for (i in seq_len(n_vars - 1)) {
-      for (j in (i + 1):n_vars) {
-        ct <- stats::cor.test(data_out[[var_names[i]]], data_out[[var_names[j]]])
-        correlation_tests$Pair[idx]        <- paste(var_names[i], "x", var_names[j])
-        correlation_tests$r_target[idx]    <- cor_matrix[i, j]
-        correlation_tests$r_achieved[idx]  <- as.numeric(ct$estimate)
-        correlation_tests$t_statistic[idx] <- as.numeric(ct$statistic)
-        correlation_tests$df[idx]          <- as.integer(ct$parameter)
-        correlation_tests$p_value[idx]     <- ct$p.value
-        correlation_tests$CI_lower[idx]    <- ct$conf.int[1]
-        correlation_tests$CI_upper[idx]    <- ct$conf.int[2]
-        idx <- idx + 1
-      }
-    }
-
-    if (n <= 5000) {
-      normality_tests <- data.frame(
-        Variable  = var_names,
-        Shapiro_W = numeric(n_vars),
-        Shapiro_p = numeric(n_vars),
-        stringsAsFactors = FALSE
-      )
-      for (i in seq_len(n_vars)) {
-        sw <- stats::shapiro.test(data_out[[var_names[i]]])
-        normality_tests$Shapiro_W[i] <- as.numeric(sw$statistic)
-        normality_tests$Shapiro_p[i] <- sw$p.value
-      }
-      assumptions <- list(normality = normality_tests)
+  # 3. Assemble the summary and hand everything back
+  target_r <- if (length(r) == 1) matrix(c(1, r, r, 1), nrow = 2) else r
+  results <- list(
+    title = if (n_variables > 2) {
+      paste("Correlations among", n_variables, "variables")
+    } else if (is.null(var_name)) {
+      "Correlation between two variables"
     } else {
-      assumptions <- list(normality = list(note = "n > 5000: Shapiro-Wilk not computed"))
-    }
-  }
-
-  default_fn <- if (n_vars == 2) {
-    paste0(var_names[1], "_", var_names[2], "_dgen.csv")
-  } else {
-    paste0(var_names[1], "_", var_names[2], "_plus", n_vars - 2, "_dgen.csv")
-  }
-  dgen_export(data_out, export_csv, default_fn)
-
-  message("Correlated variables generated (n = ", n, ", ", n_vars, " variables)")
-  message("Target correlation matrix:\n",
-          paste(utils::capture.output(round(cor_matrix, 3)), collapse = "\n"))
-  message("Achieved correlation matrix:\n",
-          paste(utils::capture.output(round(achieved_cors, 3)), collapse = "\n"))
-
-  result <- list(
-    data          = data_out,
-    targets       = targets,
-    achieved      = achieved,
-    target_cors   = cor_matrix,
-    achieved_cors = achieved_cors
+      paste("Correlation between", and_list(names))
+    },
+    table = compare_table(names, as.list(data), m, sd, decimals),
+    lines = utils::capture.output(print(correlation_table(data, target_r))),
+    note  = data_note(data, decimals)
   )
-  if (run_analysis) {
-    result$correlation_tests <- correlation_tests
-    result$assumptions       <- assumptions
-  }
+  deliver(data, results, show_results, export_csv, "cor_gen")
+}
 
-  invisible(result)
+# One row per pair of variables: the target correlation, the correlation in
+# the data, r squared (the effect size), and the usual t test of r.
+correlation_table <- function(data, target_r) {
+  pairs <- which(upper.tri(target_r), arr.ind = TRUE)
+  pairs <- pairs[order(pairs[, "row"], pairs[, "col"]), , drop = FALSE]
+  rows  <- lapply(seq_len(nrow(pairs)), function(pair) {
+    first  <- pairs[pair, "row"]
+    second <- pairs[pair, "col"]
+    test   <- stats::cor.test(data[[first]], data[[second]])
+    data.frame(
+      "r (target)" = show_number(target_r[first, second], 2),
+      "r (data)"   = show_number(unname(test$estimate), 2),
+      "r squared"  = show_number(unname(test$estimate)^2, 2),
+      "t"          = show_number(unname(test$statistic), 2),
+      "df"         = unname(test$parameter),
+      "p"          = show_p(test$p.value),
+      row.names   = paste(names(data)[first], "and", names(data)[second]),
+      check.names = FALSE
+    )
+  })
+  do.call(rbind, rows)
 }

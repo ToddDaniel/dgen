@@ -1,209 +1,138 @@
-#' Generate Data for a Paired Samples T-Test
+# t_paired_gen(): data for a paired (dependent-samples) t test.
+# Method: two exactly correlated variables from the engine, one row per
+# person, then the t test of the mean difference.
+
+#' Generate data for a paired t test
 #'
-#' Creates data for a paired samples t-test with two correlated measurements
-#' on the same participants. Uses \code{MASS::mvrnorm()} with iterative
-#' refinement to achieve exact target means, standard deviations, and
-#' the specified within-person correlation.
+#' Creates two measurements on the same people, with exactly the means,
+#' standard deviations and correlation you choose, and tests the mean
+#' difference.
 #'
-#' @param n Number of participants (pairs)
-#' @param measure1_mean Mean for Measurement 1
-#' @param measure1_sd Standard deviation for Measurement 1
-#' @param measure1_label Label for Measurement 1 (default = \code{"Measure1"})
-#' @param measure2_mean Mean for Measurement 2
-#' @param measure2_sd Standard deviation for Measurement 2
-#' @param measure2_label Label for Measurement 2 (default = \code{"Measure2"})
-#' @param correlation Target within-person correlation (default = 0.70)
-#' @param var_name Name for the measured variable (default = \code{"Score"})
-#' @param measure_name Name for the measurement grouping variable in long
-#'   format (default = \code{"Measurement"})
-#' @param id_name Name for the participant ID variable (default = \code{"ID"})
-#' @param output_format One of \code{"wide"}, \code{"long"}, or \code{"both"}
-#'   (default = \code{"wide"})
-#' @param decimals Number of decimal places for rounding (default = 2)
-#' @param seed Integer seed for reproducibility (default = NULL)
-#' @param export_csv Either \code{FALSE} (default; nothing is written),
-#'   \code{TRUE} (write a CSV with an auto-generated name to the current
-#'   working directory), or a file path giving the CSV destination.
-#'   When \code{output_format = "both"} and a file path is supplied,
-#'   \code{_wide}/\code{_long} is inserted before the extension
-#' @param run_analysis Logical; run the paired t-test automatically?
-#'   (default = TRUE)
+#' @details
+#' **What is exact.** The mean and SD of each measurement, rounded to
+#' `decimals + 1` places, equal `m` and `sd`, and their correlation, rounded
+#' to 2 decimal places, equals `r`. SDs are sample SDs (`n - 1` in the
+#' denominator; Excel's `STDEV.S`). Because both means are exact, so is the
+#' mean difference. If you give `d`, Cohen's d of the returned data, rounded
+#' to 2 decimal places, equals `d`. The SD of the differences, the t
+#' statistic, the p-value and the confidence interval are calculated from
+#' the data and shown in the summary; they are not targets.
 #'
-#' @return A list with:
-#'   \item{data}{Primary data frame (wide or long, per \code{output_format})}
-#'   \item{data_wide}{Wide-format data frame (one row per participant)}
-#'   \item{data_long}{Long-format data frame (one row per measurement)}
-#'   \item{measure1_stats}{Descriptive statistics for Measurement 1}
-#'   \item{measure2_stats}{Descriptive statistics for Measurement 2}
-#'   \item{difference_stats}{Statistics for the difference scores}
-#'   \item{correlation_achieved}{Achieved within-person correlation}
-#'   \item{cohens_d_paired}{Paired Cohen's d}
-#'   \item{cohens_d_corrected}{Correlation-corrected Cohen's d}
-#'   \item{iterations}{Number of iterations required}
-#'   \item{t_test_results}{Paired t-test result (if \code{run_analysis = TRUE})}
+#' **Direction.** Differences are always the first measurement minus the
+#' second: the mean difference, t, the confidence interval and Cohen's d all
+#' run that way, as they do in the Excel Data Analysis ToolPak (Variable 1
+#' minus Variable 2). The summary names the direction. If a student's
+#' software shows the opposite sign, it took the two measurements in the
+#' other order. The size of t and the p-value are the same either way.
+#'
+#' **Why `r` matters.** The SD of the differences depends on the
+#' correlation: the more strongly the two measurements are related, the
+#' smaller the SD of the differences and the larger t becomes.
+#'
+#' **Using `d`.** Cohen's d here is the mean difference divided by the SD of
+#' the differences (t divided by the square root of `n`), so a positive `d`
+#' makes the first measurement higher and a negative `d` makes the second
+#' higher. Give the first measurement's mean as `m`, and `d`; the second
+#' mean is set to `m - d * SD of differences`, moved to the nearest mean
+#' that `n` rounded values can have.
+#'
+#' **Limits.** The data are bell-shaped, with no minimum or maximum. When a
+#' request cannot be met, the function stops and says why; in rare cases
+#' that can take several seconds.
+#'
+#' @inheritParams dgen
+#' @param n Number of people (pairs of measurements).
+#' @param m Target means of the two measurements, such as `c(50, 55)`. If
+#'   you give `d`, give only the first mean.
+#' @param sd Target standard deviations of the two measurements.
+#' @param r Target correlation between the two measurements, such as `0.7`.
+#' @param d Target Cohen's d, to 2 decimal places, as another way of setting
+#'   the second mean.
+#' @param var_name Names for the two measurements, in quotes. The default is
+#'   `c("time1", "time2")`.
+#' @param show_results `TRUE` (the default) prints a short summary: the
+#'   targets beside what the data actually have, then the t test. `FALSE`
+#'   prints nothing.
+#'
+#' @return A data frame with `n` rows (one per person) and two columns (one
+#'   per measurement), returned invisibly. The summary is stored inside it;
+#'   see it again with [dgen_results()].
 #'
 #' @examples
-#' result <- t_paired_gen(
-#'   n = 30,
-#'   measure1_mean = 50, measure1_sd = 10, measure1_label = "Pre",
-#'   measure2_mean = 55, measure2_sd = 10, measure2_label = "Post",
-#'   correlation = 0.70, var_name = "Test_Score"
-#' )
-#' result$t_test_results
+#' training <- t_paired_gen(n = 30, m = c(50, 55), sd = c(10, 10), r = 0.7,
+#'                          var_name = c("before", "after"), decimals = 1,
+#'                          seed = 1)
+#' t.test(training$before, training$after, paired = TRUE)   # before - after
+#'
+#' # The same design from an effect size. d is before minus after, so
+#' # d = -0.5 puts the "after" scores higher
+#' training <- t_paired_gen(n = 30, m = 50, sd = c(10, 10), r = 0.7, d = -0.5,
+#'                          var_name = c("before", "after"), decimals = 1,
+#'                          seed = 1)
 #'
 #' @export
-t_paired_gen <- function(n,
-                          measure1_mean,
-                          measure1_sd,
-                          measure1_label = "Measure1",
-                          measure2_mean,
-                          measure2_sd,
-                          measure2_label = "Measure2",
-                          correlation    = 0.70,
-                          var_name       = "Score",
-                          measure_name   = "Measurement",
-                          id_name        = "ID",
-                          output_format  = "wide",
-                          decimals       = 2,
-                          seed           = NULL,
-                          export_csv     = FALSE,
-                          run_analysis   = TRUE) {
+t_paired_gen <- function(n, m, sd, r, d = NULL, decimals = 2,
+                         var_name = NULL, seed = NULL, export_csv = FALSE,
+                         show_results = TRUE) {
 
-  # Validation
-  if (!is.numeric(n) || n <= 0 || n != round(n)) stop("'n' must be a positive integer")
-  if (!is.numeric(measure1_sd) || measure1_sd < 0) stop("'measure1_sd' must be non-negative")
-  if (!is.numeric(measure2_sd) || measure2_sd < 0) stop("'measure2_sd' must be non-negative")
-  if (!is.numeric(correlation) || correlation < -1 || correlation > 1)
-    stop("'correlation' must be between -1 and 1")
-  if (!is.numeric(decimals) || decimals < 0 || decimals != round(decimals))
-    stop("'decimals' must be a non-negative integer")
-  if (!output_format %in% c("wide", "long", "both"))
-    stop("'output_format' must be 'wide', 'long', or 'both'")
-  if (nchar(measure1_label) == 0 || nchar(measure2_label) == 0)
-    stop("Measure labels cannot be empty")
-  if (measure1_label == measure2_label) warning("Measure labels are identical")
-
-  if (!is.null(seed)) set.seed(seed)
-
-  target_mean1 <- round(measure1_mean, decimals + 1)
-  target_sd1   <- round(measure1_sd,   decimals + 1)
-  target_mean2 <- round(measure2_mean, decimals + 1)
-  target_sd2   <- round(measure2_sd,   decimals + 1)
-  target_cor   <- round(correlation, 3)
-  max_iter     <- 100000
-  iteration    <- 0
-
-  repeat {
-    iteration <- iteration + 1
-
-    cov12 <- correlation * measure1_sd * measure2_sd
-    Sigma  <- matrix(c(measure1_sd^2, cov12, cov12, measure2_sd^2), nrow = 2)
-    raw    <- MASS::mvrnorm(n = n,
-                             mu    = c(measure1_mean, measure2_mean),
-                             Sigma = Sigma)
-
-    m1d <- round(scale(raw[, 1])[, 1] * target_sd1 + target_mean1, decimals)
-    m2d <- round(scale(raw[, 2])[, 1] * target_sd2 + target_mean2, decimals)
-
-    ok <- round(mean(m1d), decimals + 1) == target_mean1 &&
-          round(stats::sd(m1d), decimals + 1) == target_sd1 &&
-          round(mean(m2d), decimals + 1) == target_mean2 &&
-          round(stats::sd(m2d), decimals + 1) == target_sd2 &&
-          round(stats::cor(m1d, m2d), 3) == target_cor
-    if (ok) break
-    if (iteration >= max_iter) {
-      warning("Maximum iterations reached. Results may not exactly match targets.")
-      break
-    }
+  # 1. Check inputs; with d, work out the second mean it stands for
+  if (missing(n) || missing(m) || missing(sd) || missing(r)) {
+    stop("t_paired_gen needs n, m, sd and r, for example ",
+         "t_paired_gen(n = 30, m = c(50, 55), sd = c(10, 10), r = 0.7).",
+         call. = FALSE)
   }
-
-  # Wide format
-  data_wide <- data.frame(
-    ID = seq_len(n), M1 = m1d, M2 = m2d,
-    stringsAsFactors = FALSE
-  )
-  colnames(data_wide) <- c(id_name, measure1_label, measure2_label)
-
-  # Long format
-  data_long <- data.frame(
-    ID          = rep(seq_len(n), times = 2),
-    Measurement = rep(c(measure1_label, measure2_label), each = n),
-    Score       = c(m1d, m2d),
-    stringsAsFactors = FALSE
-  )
-  colnames(data_long) <- c(id_name, measure_name, var_name)
-
-  # Statistics
-  diff_scores <- m2d - m1d
-  mean_diff   <- mean(diff_scores)
-  sd_diff     <- stats::sd(diff_scores)
-  cor_ach     <- stats::cor(m1d, m2d)
-  d_paired    <- mean_diff / sd_diff
-  d_corrected <- d_paired / sqrt(2 * (1 - cor_ach))
-
-  measure1_stats <- data.frame(Measure = measure1_label, N = n,
-                                Target_Mean = measure1_mean,
-                                Achieved_Mean = round(mean(m1d), decimals + 2),
-                                Target_SD = measure1_sd,
-                                Achieved_SD = round(stats::sd(m1d), decimals + 2))
-  measure2_stats <- data.frame(Measure = measure2_label, N = n,
-                                Target_Mean = measure2_mean,
-                                Achieved_Mean = round(mean(m2d), decimals + 2),
-                                Target_SD = measure2_sd,
-                                Achieved_SD = round(stats::sd(m2d), decimals + 2))
-  difference_stats <- data.frame(
-    Mean_Difference = round(mean_diff, decimals + 2),
-    SD_Difference   = round(sd_diff,   decimals + 2),
-    Min_Difference  = round(min(diff_scores), decimals),
-    Max_Difference  = round(max(diff_scores), decimals)
-  )
-
-  t_test_results <- if (run_analysis) {
-    stats::t.test(data_wide[[measure1_label]],
-                  data_wide[[measure2_label]],
-                  paired = TRUE)
-  } else NULL
-
-  dgen_export_pair(data_wide, data_long, output_format, export_csv,
-                   paste0(var_name, "_paired_wide_dgen.csv"),
-                   paste0(var_name, "_paired_long_dgen.csv"))
-
-  message("Paired t-test data generated in ", iteration, " iterations.")
-  message(sprintf("Correlation: target = %.3f, achieved = %.3f",
-                  correlation, cor_ach))
-  message(sprintf("Mean difference: %.3f | Cohen's d (paired): %.3f",
-                  mean_diff, d_paired))
-
-  if (run_analysis && !is.null(t_test_results)) {
-    p <- t_test_results$p.value
-    message(sprintf("t(%d) = %.3f, p = %s",
-                    as.integer(t_test_results$parameter),
-                    as.numeric(t_test_results$statistic),
-                    format.pval(p, digits = 3, eps = 0.001)))
-  }
-
-  result <- list(
-    measure1_stats       = measure1_stats,
-    measure2_stats       = measure2_stats,
-    difference_stats     = difference_stats,
-    correlation_achieved = cor_ach,
-    cohens_d_paired      = d_paired,
-    cohens_d_corrected   = d_corrected,
-    iterations           = iteration
-  )
-
-  if (output_format == "wide") {
-    result$data      <- data_wide
-    result$data_wide <- data_wide
-  } else if (output_format == "long") {
-    result$data      <- data_long
-    result$data_long <- data_long
+  need_sample_size(n, "n", 30)
+  need_numbers(sd, 2, "sd", "c(10, 10)")
+  need_numbers(r, 1, "r", "0.7")
+  check_correlations(r, 2, 2)
+  check_decimals(decimals)
+  check_d(d)
+  names <- variable_names(var_name, 2, c("time1", "time2"))
+  use_seed(seed)
+  if (is.null(d)) {
+    need_numbers(m, 2, "m", "c(50, 55)")
   } else {
-    result$data_wide <- data_wide
-    result$data_long <- data_long
+    if (!is_number(m) || length(m) != 1) {
+      stop("When you give d, m is the first mean only: a single number, ",
+           "such as m = 50. The second mean is worked out from d.",
+           call. = FALSE)
+    }
+    check_precision(m, decimals + 1, decimals, "means")
+    sd_of_differences <- sqrt(sd[1]^2 + sd[2]^2 - 2 * r * sd[1] * sd[2])
+    m <- c(m, mean_from_d(m, -d, sd_of_differences, n, decimals))
   }
 
-  if (run_analysis) result$t_test_results <- t_test_results
+  # 2. Build exact data; a typed-in d is one more promise for the engine
+  cohens_d <- function(values) {
+    differences <- values[, 1] - values[, 2]
+    mean(differences) / stats::sd(differences)
+  }
+  values <- exact_mv(
+    n, m, sd, r, decimals, derived_means = !is.null(d),
+    also_check = if (!is.null(d)) function(data) reports_as(cohens_d(data), d)
+  )$data
+  data <- stats::setNames(as.data.frame(values), names)
 
-  invisible(result)
+  # 3. Run the test (first measurement minus second), assemble the summary
+  #    and hand everything back
+  direction   <- paste(names[1], "-", names[2])
+  differences <- values[, 1] - values[, 2]
+  test <- stats::t.test(values[, 1], values[, 2], paired = TRUE)
+  results <- list(
+    title = paste0("Paired t test",
+                   if (!is.null(var_name)) paste0(": ", and_list(names))),
+    table = compare_table(names, as.list(data), m, sd, decimals),
+    lines = c(paste0("Correlation between ", names[1], " and ", names[2],
+                     ": target ", show_number(r, 2), ", data ",
+                     show_number(stats::cor(values)[1, 2], 2)),
+              paste0("Differences (", direction, "): mean = ",
+                     show_number(mean(differences), decimals + 1), ", SD = ",
+                     show_number(stats::sd(differences), decimals + 1)),
+              t_line(test),
+              ci_line(test, "mean difference", decimals),
+              d_line(cohens_d(values), d,
+                     "mean difference / SD of differences", direction)),
+    note  = data_note(data, decimals)
+  )
+  deliver(data, results, show_results, export_csv, "t_paired_gen")
 }

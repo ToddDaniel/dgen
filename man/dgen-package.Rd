@@ -2,98 +2,65 @@
 % Please edit documentation in R/dgen-package.R
 \docType{package}
 \name{dgen-package}
-\alias{dgen}
 \alias{dgen-package}
-\title{dgen: Data Generator for Statistical Teaching and Testing}
+\title{dgen: Classroom Datasets with Exact Summary Statistics}
 \description{
-Generates datasets with exact statistical properties -- means, standard
-deviations, and correlations -- for teaching statistics and validating
-analytical workflows. Uses iterative refinement to hit specified
-parameters exactly, rather than approximating them. Each function
-generates data and (by default) automatically runs the corresponding
-statistical test, returning results alongside effect sizes and
-assumption checks.
+Generates datasets whose summary statistics match the targets you choose.
+Means, standard deviations, correlations and counts hold exactly in the
+rounded data students receive. Functions are named for the test being
+taught, and each can run the matching test and report an effect size, so
+instructors can check the result before assigning the data.
 }
 \section{Core generators}{
 
 \describe{
-\item{\code{\link{stat_gen}}}{Single variable with an exact mean and SD}
-\item{\code{\link{cor_gen}}}{Multiple correlated variables}
+\item{\code{\link{dgen}}}{One variable (or several independent
+variables) with an exact mean and SD}
+\item{\code{\link{cor_gen}}}{Two or more variables with exact means,
+SDs and correlations}
+\item{\code{\link{dgen_results}}}{Show the summary stored with a
+dgen data set}
 }
 }
 
 \section{T-test family}{
 
 \describe{
-\item{\code{\link{t_onesample_gen}}}{One-sample t-test data}
-\item{\code{\link{t_indep_gen}}}{Independent samples t-test data}
-\item{\code{\link{t_paired_gen}}}{Paired samples t-test data}
+\item{\code{\link{t_one_gen}}}{One-sample t test}
+\item{\code{\link{t_indep_gen}}}{Independent-samples t test}
+\item{\code{\link{t_paired_gen}}}{Paired t test}
 }
 }
 
 \section{ANOVA family}{
 
 \describe{
-\item{\code{\link{anova_gen}}}{One-way ANOVA data}
-\item{\code{\link{anova_twoway_gen}}}{Two-way factorial ANOVA data}
-\item{\code{\link{anova_blocked_gen}}}{Randomized block design ANOVA data}
+\item{\code{\link{anova_gen}}}{One-way ANOVA}
 }
 }
 
-\section{Chi-square family}{
+\section{Proportions and chi-square}{
 
 \describe{
-\item{\code{\link{chisq_gof_gen}}}{Goodness-of-fit test data}
-\item{\code{\link{chisq_indep_gen}}}{Test of independence data}
-\item{\code{\link{chisq_table_gen}}}{Expand a frequency table to raw observations}
+\item{\code{\link{prop_one_gen}}}{One-proportion z test}
+\item{\code{\link{prop_two_gen}}}{Two-proportion z test}
+\item{\code{\link{chisq_gen}}}{Chi-square tests: goodness of fit and
+independence}
 }
 }
 
-\section{Proportion family}{
-
-\describe{
-\item{\code{\link{oneprop_gen}}}{One-sample proportion test data}
-\item{\code{\link{twoprop_gen}}}{Two-sample proportion test data}
-\item{\code{\link{mcnemar_gen}}}{Paired proportions (McNemar test) data}
-}
-}
-
-\section{Regression family}{
+\section{Regression}{
 
 \describe{
-\item{\code{\link{make_predictors}}}{Predictor variables, continuous and/or binary}
-\item{\code{\link{bin_gen}}}{Binary variable correlated with a continuous variable}
-\item{\code{\link{reg_gen}}}{Outcome variable from specified regression coefficients}
+\item{\code{\link{reg_gen}}}{Simple and multiple linear regression}
 }
 }
 
-\section{Psychometric scale family}{
-
-\describe{
-\item{\code{\link{scale_gen}}}{Multi-item Likert scale with intentional bad items}
-\item{\code{\link{item_gen}}}{Back-solved items from a composite score}
+\references{
+Morse, B. J. (2012). \emph{MorseGen: Simple raw data generator based on
+user-specified summary statistics} (R package version 1.2).
+\url{https://vc.bridgew.edu/fac_articles/1/}
 }
-}
-
-\section{Effect-size helpers}{
-
-\describe{
-\item{\code{\link{d_to_means}}}{Cohen's d to target means for
-independent groups}
-\item{\code{\link{d_to_means_paired}}}{Paired Cohen's d to target means
-for repeated measures}
-\item{\code{\link{f_to_means}}}{Cohen's f (or eta-squared) to target
-group means for ANOVA}
-\item{\code{\link{h_to_prop}}}{Cohen's h to a second target proportion}
-}
-}
-
-\section{Origins}{
-
-This package builds on the design of MorseGen, originally written by
-Dr. Brendan Morse. See the README for details.
-}
-
 \seealso{
 Useful links:
 \itemize{
@@ -105,9 +72,9 @@ Useful links:
 \author{
 \strong{Maintainer}: Todd Daniel \email{ToddDaniel@missouristate.edu}
 
-Other contributors:
+Authors:
 \itemize{
-  \item Brendan Morse (Author of the original MorseGen functions (stat.gen, cor.gen), 1982-2018, on which this package's design is based) [contributor]
+  \item Todd Daniel \email{ToddDaniel@missouristate.edu}
 }
 
 }
